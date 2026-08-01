@@ -3,3 +3,8 @@ node_modules/
 data/*.json
 .DS_Store
 *.log
+uploads/*.png
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.gif
+uploads/*.webp

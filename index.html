@@ -16,15 +16,19 @@
   .card-list{padding:16px}
   .loading-hint{text-align:center;padding:40px 20px;color:#999;font-size:14px}
 </style>
-<link rel="stylesheet" href="css/style.css?v=20260801c">
+<link rel="stylesheet" href="css/style.css?v=20260801d">
 </head>
 <body>
 
 <!-- ===== 顶部 Hero ===== -->
-<div class="hero">
-  <div class="hero-badge">🧧 横琴美食联盟</div>
-  <h1>三店联动</h1>
-  <p>每家店都有专属红包，逛哪家领哪家</p>
+<div class="hero" style="position:relative;">
+  <div style="position:absolute;top:10px;right:16px;z-index:2;">
+    <button onclick="setLang('zh')" id="langBtnZh" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px;font-weight:700;">中</button>
+    <button onclick="setLang('en')" id="langBtnEn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">EN</button>
+  </div>
+  <div class="hero-badge">🧧 <span id="heroTag" data-zh="横琴美食联盟" data-en="Hengqin Food Alliance">横琴美食联盟</span></div>
+  <h1 id="heroTitle" data-zh="三店联动" data-en="3-Restaurant Event">三店联动</h1>
+  <p id="heroSub" data-zh="每家店都有专属红包，逛哪家领哪家" data-en="Claim a red packet at each restaurant!">每家店都有专属红包，逛哪家领哪家</p>
 </div>
 
 <!-- JS 未加载时的提示，JS 加载后会被替换 -->
@@ -160,8 +164,8 @@
 <!-- Toast -->
 <div class="toast" id="toast" style="display:none;"></div>
 
-  <script src="js/qrcode-lib.js?v=20260801c"></script>
-  <script src="js/data.js?v=20260801c"></script>
-  <script src="js/app.js?v=20260801c"></script>
+  <script src="js/qrcode-lib.js?v=20260801d"></script>
+  <script src="js/data.js?v=20260801d"></script>
+  <script src="js/app.js?v=20260801d"></script>
 </body>
 </html>

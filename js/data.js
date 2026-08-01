@@ -1,144 +1,151 @@
-// ==================== 三店联动 · 餐厅数据配置 ====================
-// 无需微信公众号，顾客填手机号即可领取红包
+// ==================== 三店联动 · 餐厅数据配置 v3.0 ====================
+// 中英双语支持 · 服务端持久化 · 无需微信公众号
 // 核销方式：顾客出示二维码 → 店员扫码核销
+
+// 语言管理
+let currentLang = localStorage.getItem('s3_lang') || 'zh';
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('s3_lang', lang);
+  // 触发语言切换事件
+  document.dispatchEvent(new CustomEvent('langChange', { detail: lang }));
+}
+function L(zh, en) {
+  if (!en) return zh;
+  return currentLang === 'en' ? en : zh;
+}
 
 const RESTAURANTS = [
   {
     id: 1,
-    name: "意葡 La Taverna",
-    subtitle: "励骏庞都店",
-    category: "意式·葡式料理",
-    key: "italian",
-    logo: "🍝",
+    name: "意葡 La Taverna", nameEn: "La Taverna",
+    subtitle: "励骏庞都店", subtitleEn: "Lijun Pangdu",
+    category: "意式·葡式料理", categoryEn: "Italian & Portuguese",
+    key: "italian", logo: "🍝",
     cover: "img/italian/storefront.png",
-    color: "#C0392B",
-    colorLight: "#FADBD8",
-    dianping: { rating: "4.2", avgPrice: "¥121/人", rank: "珠海提拉米苏第10名", dishes: 137 },
-    redpacket: {
-      amount: 15, minSpend: 150, total: 300, validDays: 30,
-      desc: "满¥150可用，有效期30天"
-    },
+    color: "#C0392B", colorLight: "#FADBD8",
+    dianping: { rating: "4.2", avgPrice: "¥121/人", avgPriceEn: "¥121/person", rank: "珠海提拉米苏第10名", rankEn: "#10 Tiramisu in Zhuhai", dishes: 137 },
+    redpacket: { amount: 15, minSpend: 150, total: 300, validDays: 30, desc: "满¥150可用，有效期30天", descEn: "Min. spend ¥150, valid 30 days" },
     info: {
       address: "横琴粤澳深度合作区琴政路44号励骏庞都广场AL-105号商铺",
-      phone: "0756-8800576",
-      phone2: "15919156700",
+      addressEn: "Shop AL-105, Lijun Pangdu Plaza, No.44 Qinzheng Rd, Hengqin",
+      phone: "0756-8800576", phone2: "15919156700",
       hours: "周一至五 11:00-23:00 | 周末 11:00-23:30",
-      lat: 22.1380,
-      lng: 113.5310,
+      hoursEn: "Mon-Fri 11:00-23:00 | Weekends 11:00-23:30",
+      lat: 22.1380, lng: 113.5310
     },
     description: "意葡餐厅自2019年珠海横琴中央汇店起步，2023年进驻横琴励骏庞都店，秉承「零添加剂，健康饮食」的宗旨。以地中海美食为主题，涵盖意大利、葡萄牙、西班牙菜。2021-2024年连续四年获评放心消费承诺单位及诚信店，2023年荣登大湾区杂志专访，获评珠海市「唐家肴」美食大赛银奖。大众点评4.2分，137道网友推荐菜，提拉米苏位列珠海第10名。",
+    descriptionEn: "La Taverna started in 2019 at Hengqin Central Hub and opened its Lijun Pangdu location in 2023. Adhering to a 'zero additives, healthy dining' philosophy, it serves Mediterranean cuisine spanning Italian, Portuguese, and Spanish dishes. Awarded 'Trusted Consumer Unit' for four consecutive years (2021-2024), featured in Greater Bay Area Magazine, and won Silver at the Zhuhai 'Tangjiayao' Culinary Competition.",
     highlight: "大众点评4.2分 · 珠海提拉米苏TOP10 · 连续四年诚信店 · 唐家肴银奖",
+    highlightEn: "Dianping 4.2★ · Top 10 Tiramisu · 4-Year Trusted · Silver Award",
     dishes: [
-      { name: "葡式柠檬花甲", price: 68, desc: "网友推荐TOP1，新鲜花甲配柠檬白酒", emoji: "🍋", dpRank: 1, img: "img/italian/lemon_clams.png" },
-      { name: "提拉米苏", price: 38, desc: "珠海第10名，经典意式手工甜品", emoji: "🍰", dpRank: 2, img: "img/italian/tiramisu.png" },
-      { name: "意式千层面", price: 78, desc: "网友推荐TOP3，多层手工面皮", emoji: "🧀", dpRank: 3, img: "img/italian/lasagna.png" },
-      { name: "美味鹅肝牛柳扒", price: 188, desc: "进口牛柳配鹅肝，奢华之选", emoji: "🥩", dpRank: 4, img: "img/italian/beef_foie_gras.png" },
-      { name: "意式萨拉米披萨", price: 88, desc: "经典萨拉米，石炉现烤薄底", emoji: "🍕", dpRank: 5, img: "img/italian/salami_pizza.png" },
-      { name: "招牌海虾黑面", price: 78, desc: "墨鱼汁意面配大虾，招牌必点", emoji: "🦐", dpRank: 6, img: "img/italian/squid_ink_pasta.png" }
+      { name: "葡式柠檬花甲", nameEn: "Portuguese Lemon Clams", price: 68, desc: "网友推荐TOP1，新鲜花甲配柠檬白酒", descEn: "Fresh clams with lemon and white wine, #1 recommended", emoji: "🍋", dpRank: 1, img: "img/italian/lemon_clams.png" },
+      { name: "提拉米苏", nameEn: "Tiramisu", price: 38, desc: "珠海第10名，经典意式手工甜品", descEn: "#10 in Zhuhai, classic handmade Italian dessert", emoji: "🍰", dpRank: 2, img: "img/italian/tiramisu.png" },
+      { name: "意式千层面", nameEn: "Lasagna", price: 78, desc: "网友推荐TOP3，多层手工面皮", descEn: "Multi-layer handmade pasta, #3 recommended", emoji: "🧀", dpRank: 3, img: "img/italian/lasagna.png" },
+      { name: "美味鹅肝牛柳扒", nameEn: "Beef Tenderloin w/ Foie Gras", price: 188, desc: "进口牛柳配鹅肝，奢华之选", descEn: "Imported beef tenderloin with foie gras", emoji: "🥩", dpRank: 4, img: "img/italian/beef_foie_gras.png" },
+      { name: "意式萨拉米披萨", nameEn: "Salami Pizza", price: 88, desc: "经典萨拉米，石炉现烤薄底", descEn: "Classic salami, stone-fired thin crust", emoji: "🍕", dpRank: 5, img: "img/italian/salami_pizza.png" },
+      { name: "招牌海虾黑面", nameEn: "Squid Ink Pasta w/ Prawns", price: 78, desc: "墨鱼汁意面配大虾，招牌必点", descEn: "Squid ink spaghetti with grilled prawns", emoji: "🦐", dpRank: 6, img: "img/italian/squid_ink_pasta.png" }
     ],
     combos: [
-      { name: "双人浪漫套餐", content: "萨拉米披萨×1 + 千层面×1 + 鹅肝牛柳扒×1 + 饮品×2 + 提拉米苏×2", originalPrice: 538, price: 388, tag: "立省¥150" },
-      { name: "四人欢聚套餐", content: "披萨×2 + 千层面×2 + 柠檬花甲×1 + 烤鸡×1 + 饮品×4", originalPrice: 678, price: 498, tag: "立省¥180" },
-      { name: "六人派对套餐", content: "牛柳扒×2 + 披萨×2 + 千层面×3 + 花甲×2 + 饮品×6 + 提拉米苏×3", originalPrice: 1288, price: 888, tag: "立省¥400" }
+      { name: "双人浪漫套餐", nameEn: "Romantic Dinner for Two", content: "萨拉米披萨×1 + 千层面×1 + 鹅肝牛柳扒×1 + 饮品×2 + 提拉米苏×2", contentEn: "Salami Pizza×1 + Lasagna×1 + Beef Foie Gras×1 + Drinks×2 + Tiramisu×2", originalPrice: 538, price: 388, tag: "立省¥150", tagEn: "Save ¥150" },
+      { name: "四人欢聚套餐", nameEn: "Feast for Four", content: "披萨×2 + 千层面×2 + 柠檬花甲×1 + 烤鸡×1 + 饮品×4", contentEn: "Pizza×2 + Lasagna×2 + Lemon Clams×1 + Roast Chicken×1 + Drinks×4", originalPrice: 678, price: 498, tag: "立省¥180", tagEn: "Save ¥180" },
+      { name: "六人派对套餐", nameEn: "Party of Six", content: "牛柳扒×2 + 披萨×2 + 千层面×3 + 花甲×2 + 饮品×6 + 提拉米苏×3", contentEn: "Beef×2 + Pizza×2 + Lasagna×3 + Clams×2 + Drinks×6 + Tiramisu×3", originalPrice: 1288, price: 888, tag: "立省¥400", tagEn: "Save ¥400" }
     ],
-    gallery: [
-      "img/italian/storefront.png",
-      "img/italian/interior.png",
-      "img/italian/terrace.png"
-    ]
+    gallery: ["img/italian/storefront.png", "img/italian/interior.png", "img/italian/terrace.png"]
   },
   {
     id: 2,
-    name: "西贡码头·越南餐厅",
-    subtitle: "横琴口岸店",
-    category: "地道越南料理",
-    key: "saigon",
-    logo: "🍜",
+    name: "西贡码头·越南餐厅", nameEn: "Saigon Pier · Vietnamese",
+    subtitle: "横琴口岸店", subtitleEn: "Hengqin Port",
+    category: "地道越南料理", categoryEn: "Authentic Vietnamese",
+    key: "saigon", logo: "🍜",
     cover: "img/saigon/storefront.jpg",
-    color: "#2E7D32",
-    colorLight: "#D5F5E3",
-    dianping: { rating: "4.3", avgPrice: "¥72/人", rank: "横琴口岸热门越南菜", dishes: 86 },
-    redpacket: {
-      amount: 10, minSpend: 100, total: 400, validDays: 30,
-      desc: "满¥100可用，有效期30天"
-    },
+    color: "#2E7D32", colorLight: "#D5F5E3",
+    dianping: { rating: "4.3", avgPrice: "¥72/人", avgPriceEn: "¥72/person", rank: "横琴口岸热门越南菜", rankEn: "Popular Vietnamese at Hengqin Port", dishes: 86 },
+    redpacket: { amount: 10, minSpend: 100, total: 400, validDays: 30, desc: "满¥100可用，有效期30天", descEn: "Min. spend ¥100, valid 30 days" },
     info: {
       address: "横琴粤澳深度合作区环岛东路2050号横琴口岸C区408号铺",
-      phone: "0756-8800117",
-      phone2: "13128568852",
+      addressEn: "Shop 408, Zone C, Hengqin Port, No.2050 Huandao East Rd",
+      phone: "0756-8800117", phone2: "13128568852",
       hours: "周一至四 10:30-22:30 | 周五至日 10:30-23:00",
-      lat: 22.1210,
-      lng: 113.5430,
+      hoursEn: "Mon-Thu 10:30-22:30 | Fri-Sun 10:30-23:00",
+      lat: 22.1210, lng: 113.5430
     },
-    description: "西贡厨房，跨越四十载的越南味觉史诗。由英越传奇主厨Ailee Dang与跨界企业家Mary Tang共同主理。主厨Ailee拥有逾40年辉煌履历——从伯明翰街角起步到创立德比郡首家日式铁板烧餐厅，将半生淬炼的厨艺哲学倾注于越南料理。澳门日报、今日头条等多家媒体报道，被誉为「横琴最值得打卡的越南餐厅」。",
+    description: "西贡厨房，跨越四十载的越南味觉史诗。由英越传奇主厨Ailee Dang与跨界企业家Mary Tang共同主理。主厨Ailee拥有逾40年辉煌履历——从伯明翰街角起步到创立德比郡首家日式铁板烧餐厅，将半生淬炼的厨艺哲学倾注于越南料理。澳门日报、今日头条等多家媒体报道，被誉为「横琴最值得打卡的越��餐厅」。",
+    descriptionEn: "Saigon Kitchen, a 40-year Vietnamese culinary saga. Co-founded by legendary British-Vietnamese chef Ailee Dang and entrepreneur Mary Tang. Chef Ailee's 40-year journey spans from a Birmingham corner shop to founding Derbyshire's first Japanese Teppanyaki restaurant. Featured in Macau Daily and Toutiao, hailed as 'Hengqin's must-visit Vietnamese restaurant.'",
     highlight: "大众点评4.3分 · 澳门日报推荐 · 四十年传奇主厨 · 口岸C位",
+    highlightEn: "Dianping 4.3★ · Macau Daily Featured · 40-Year Legacy Chef · Port Location",
     dishes: [
-      { name: "火车头牛肉河粉", price: 48, desc: "进口阿根廷牛肉，整鸡整骨熬汤", emoji: "🍜", dpRank: 1, img: "img/saigon/pho.jpg" },
-      { name: "西贡青柠鱼", price: 88, desc: "新鲜鲈鱼配青柠，一秒到湄公河", emoji: "🐟", dpRank: 2, img: "img/saigon/lime_fish.jpg" },
-      { name: "香茅蜂蜜猪颈肉", price: 58, desc: "香茅提香蜂蜜滋润，层次分明", emoji: "🐷", dpRank: 3, img: "img/saigon/pork_neck.jpg" },
-      { name: "鲜虾米纸卷", price: 38, desc: "整只鲜虾裹透明米纸，清新满足", emoji: "🦐", dpRank: 4, img: "img/saigon/spring_rolls.jpg" },
-      { name: "冷盘牛扒", price: 108, desc: "嫩滑牛柳配自制蒜蓉辣椒酱", emoji: "🥩", dpRank: 5, img: "img/saigon/beef_salad.jpg" },
-      { name: "越式菠萝海鲜炒饭", price: 58, desc: "整颗菠萝盛装，视觉味觉双享受", emoji: "🍍", dpRank: 6, img: "img/saigon/snacks.jpg" }
+      { name: "火车头牛肉河粉", nameEn: "Pho with Beef", price: 48, desc: "进口阿根廷牛肉，整鸡整骨熬汤", descEn: "Argentine beef, whole chicken bone broth", emoji: "🍜", dpRank: 1, img: "img/saigon/pho.jpg" },
+      { name: "西贡青柠鱼", nameEn: "Saigon Lime Fish", price: 88, desc: "新鲜鲈鱼配青柠，一秒到湄公河", descEn: "Fresh sea bass with lime, taste of the Mekong", emoji: "🐟", dpRank: 2, img: "img/saigon/lime_fish.jpg" },
+      { name: "香茅蜂蜜猪颈肉", nameEn: "Lemongrass Honey Pork Neck", price: 58, desc: "香茅提香蜂蜜滋润，层次分明", descEn: "Lemongrass-infused, honey-glazed, layered flavor", emoji: "🐷", dpRank: 3, img: "img/saigon/pork_neck.jpg" },
+      { name: "鲜虾米纸卷", nameEn: "Shrimp Rice Paper Rolls", price: 38, desc: "整只鲜虾裹透明米纸，清新满足", descEn: "Whole shrimp wrapped in translucent rice paper", emoji: "🦐", dpRank: 4, img: "img/saigon/spring_rolls.jpg" },
+      { name: "冷盘牛扒", nameEn: "Cold Beef Salad", price: 108, desc: "嫩滑牛柳配自制蒜蓉辣椒酱", descEn: "Tender beef fillet with house garlic chili sauce", emoji: "🥩", dpRank: 5, img: "img/saigon/beef_salad.jpg" },
+      { name: "越式菠萝海鲜炒饭", nameEn: "Pineapple Seafood Fried Rice", price: 58, desc: "整颗菠萝盛装，视觉味觉双享受", descEn: "Served in a whole pineapple, visual and taste delight", emoji: "🍍", dpRank: 6, img: "img/saigon/snacks.jpg" }
     ],
     combos: [
-      { name: "双人品鲜套餐", content: "火车头河粉×2 + 米纸卷×1 + 青柠鱼×1 + 饮品×2", originalPrice: 316, price: 238, tag: "立省¥78" },
-      { name: "四人越式盛宴", content: "河粉×2 + 青柠鱼×1 + 猪颈肉×1 + 冷盘牛扒×1 + 菠萝饭×1 + 饮品×4", originalPrice: 540, price: 398, tag: "立省¥142" },
-      { name: "六人聚会套餐", content: "河粉×4 + 青柠鱼×2 + 猪颈肉×2 + 牛扒×1 + 菠萝饭×2 + 米纸卷×2 + 饮品×6", originalPrice: 966, price: 688, tag: "立省¥278" }
+      { name: "双人品鲜套餐", nameEn: "Duo Tasting Set", content: "火车头河粉×2 + 米纸卷×1 + 青柠鱼×1 + 饮品×2", contentEn: "Pho×2 + Rice Paper Rolls×1 + Lime Fish×1 + Drinks×2", originalPrice: 316, price: 238, tag: "立省¥78", tagEn: "Save ¥78" },
+      { name: "四人越式盛宴", nameEn: "Vietnamese Feast for 4", content: "河粉×2 + 青柠鱼×1 + 猪颈肉×1 + 冷盘牛扒×1 + 菠萝饭×1 + 饮品×4", contentEn: "Pho×2 + Lime Fish×1 + Pork Neck×1 + Beef Salad×1 + Pineapple Rice×1 + Drinks×4", originalPrice: 540, price: 398, tag: "立省¥142", tagEn: "Save ¥142" },
+      { name: "六人聚会套餐", nameEn: "Gathering Set for 6", content: "河粉×4 + 青柠鱼×2 + 猪颈肉×2 + 牛扒×1 + 菠萝饭×2 + 米纸卷×2 + 饮品×6", contentEn: "Pho×4 + Lime Fish×2 + Pork Neck×2 + Beef×1 + Rice×2 + Rolls×2 + Drinks×6", originalPrice: 966, price: 688, tag: "立省¥278", tagEn: "Save ¥278" }
     ],
-    gallery: [
-      "img/saigon/storefront.jpg",
-      "img/saigon/hero.jpg",
-      "img/saigon/env_dining.jpg"
-    ]
+    gallery: ["img/saigon/storefront.jpg", "img/saigon/hero.jpg", "img/saigon/env_dining.jpg"]
   },
   {
     id: 3,
-    name: "西贡码头·融合餐厅",
-    subtitle: "横琴彩虹苑店",
-    category: "越南融合创意菜",
-    key: "fusion",
-    logo: "🍲",
+    name: "西贡码头·融合餐厅", nameEn: "Saigon Pier · Fusion",
+    subtitle: "横琴彩虹苑店", subtitleEn: "Caihongyuan, Hengqin",
+    category: "越南融合创意菜", categoryEn: "Vietnamese Fusion Creative",
+    key: "fusion", logo: "🍲",
     cover: "img/saigon/env_dining.jpg",
-    color: "#E67E22",
-    colorLight: "#FDEBD0",
-    dianping: { rating: "4.1", avgPrice: "¥58/人", rank: "彩虹苑亲民越南菜", dishes: 42 },
-    redpacket: {
-      amount: 8, minSpend: 80, total: 350, validDays: 30,
-      desc: "满¥80可用，有效期30天"
-    },
+    color: "#E67E22", colorLight: "#FDEBD0",
+    dianping: { rating: "4.1", avgPrice: "¥58/人", avgPriceEn: "¥58/person", rank: "彩虹苑亲民越南菜", rankEn: "Affordable Vietnamese", dishes: 42 },
+    redpacket: { amount: 8, minSpend: 80, total: 350, validDays: 30, desc: "满¥80可用，有效期30天", descEn: "Min. spend ¥80, valid 30 days" },
     info: {
       address: "横琴粤澳深度合作区子期南道120号彩虹苑122-2号商铺",
-      phone: "18688153210",
-      phone2: "",
-      hours: "11:00 - 22:00",
-      lat: 22.1310,
-      lng: 113.5260,
+      addressEn: "Shop 122-2, Caihongyuan, No.120 Ziqi South Rd, Hengqin",
+      phone: "18688153210", phone2: "",
+      hours: "11:00 - 22:00", hoursEn: "11:00 - 22:00",
+      lat: 22.1310, lng: 113.5260
     },
-    description: "西贡码头·融合餐厅延续西贡厨房的越南味觉传承，在传统越南料理基础上融入更多创意元素。同样由英越传奇主厨Ailee Dang与Mary Tang主理，彩虹苑店更贴近社区，价格亲民，主打中越融合创意菜，深受周边居民和上班族喜爱。",
+    description: "西贡码头·融合餐厅延续西贡厨房的越南味觉传承，在传统越南料理基础上融入更多创意元素。同��由英越传奇主厨Ailee Dang与Mary Tang主理，彩虹苑店更贴近社区，价格亲民，主打中越融合创意菜，深受周边居民和上班族喜爱。",
+    descriptionEn: "Saigon Pier Fusion continues the Vietnamese culinary heritage with creative twists. Also led by Ailee Dang and Mary Tang, this community-oriented location offers affordable Chinese-Vietnamese fusion dishes, beloved by local residents and office workers.",
     highlight: "社区温暖用餐 · 中越融合创意 · 亲民好味道 · 人均¥58",
+    highlightEn: "Community Dining · Sino-Viet Fusion · Great Value · Avg ¥58",
     dishes: [
-      { name: "西贡码头招牌河粉", price: 38, desc: "每日鲜熬汤底，越南街边经典", emoji: "🍜", dpRank: 1, img: "img/saigon/pho.jpg" },
-      { name: "香茅鸡大虾檬粉", price: 58, desc: "香茅鸡配大虾，招牌组合", emoji: "🍗", dpRank: 2, img: "img/saigon/pork_neck.jpg" },
-      { name: "冷盘牛扒", price: 98, desc: "越式冷盘做法，清爽不腻", emoji: "🥩", dpRank: 3, img: "img/saigon/beef_salad.jpg" },
-      { name: "鲜虾芒果青木瓜沙律", price: 38, desc: "鲜虾芒果配青木瓜，酸甜清爽", emoji: "🥗", dpRank: 4, img: "img/saigon/spring_rolls.jpg" },
-      { name: "越式海鲜菠萝炒饭", price: 48, desc: "菠萝的甜与海鲜的鲜完美融合", emoji: "🍍", dpRank: 5, img: "img/saigon/snacks.jpg" },
-      { name: "桂林米粉", price: 28, desc: "中越融合特色，地道桂林风味", emoji: "🍲", dpRank: 6, img: "img/saigon/pho.jpg" }
+      { name: "西贡码头招牌河粉", nameEn: "Signature Pho", price: 38, desc: "每日鲜熬汤底，越南街边经典", descEn: "Daily fresh broth, Vietnamese street classic", emoji: "🍜", dpRank: 1, img: "img/saigon/pho.jpg" },
+      { name: "香茅鸡大虾檬粉", nameEn: "Lemongrass Chicken Prawn Noodles", price: 58, desc: "香茅鸡配大虾，招牌组合", descEn: "Lemongrass chicken with prawns, signature combo", emoji: "🍗", dpRank: 2, img: "img/saigon/pork_neck.jpg" },
+      { name: "冷盘牛扒", nameEn: "Cold Beef Salad", price: 98, desc: "越式冷盘做法，清爽不腻", descEn: "Vietnamese-style cold plate, refreshing and light", emoji: "🥩", dpRank: 3, img: "img/saigon/beef_salad.jpg" },
+      { name: "鲜虾芒果青木瓜沙律", nameEn: "Shrimp Mango Papaya Salad", price: 38, desc: "鲜虾芒果配青木瓜，酸甜清爽", descEn: "Shrimp, mango, papaya - sweet, sour and refreshing", emoji: "🥗", dpRank: 4, img: "img/saigon/spring_rolls.jpg" },
+      { name: "越式海鲜菠萝炒饭", nameEn: "Seafood Pineapple Fried Rice", price: 48, desc: "菠萝的甜与海鲜的鲜完美融合", descEn: "Sweet pineapple meets savory seafood, perfect harmony", emoji: "🍍", dpRank: 5, img: "img/saigon/snacks.jpg" },
+      { name: "桂林米粉", nameEn: "Guilin Rice Noodles", price: 28, desc: "中越融合特色，地道桂林风味", descEn: "Sino-Viet fusion, authentic Guilin style", emoji: "🍲", dpRank: 6, img: "img/saigon/pho.jpg" }
     ],
     combos: [
-      { name: "双人温馨套餐", content: "招牌河粉×2 + 鸡肉串烧×1 + 青木瓜沙律×1 + 饮品×2", originalPrice: 196, price: 138, tag: "立省¥58" },
-      { name: "四人欢乐套餐", content: "河粉×2 + 桂林米粉×2 + 香茅鸡×1 + 菠萝饭×1 + 沙律×1 + 饮品×4", originalPrice: 376, price: 278, tag: "立省¥98" },
-      { name: "六人团聚套餐", content: "河粉×3 + 米粉×2 + 牛扒×1 + 香茅鸡×2 + 菠萝饭×2 + 沙律×2 + 饮品×6", originalPrice: 668, price: 488, tag: "立省¥180" }
+      { name: "双人温馨套餐", nameEn: "Cozy Duo Set", content: "招牌河粉×2 + 鸡肉串烧×1 + 青木瓜沙律×1 + 饮品×2", contentEn: "Pho×2 + Chicken Skewers×1 + Papaya Salad×1 + Drinks×2", originalPrice: 196, price: 138, tag: "立省¥58", tagEn: "Save ¥58" },
+      { name: "四人欢乐套餐", nameEn: "Happy Four Set", content: "河粉×2 + 桂林米粉×2 + 香茅鸡×1 + 菠萝饭×1 + 沙律×1 + 饮品×4", contentEn: "Pho×2 + Guilin Noodles×2 + Lemongrass Chicken×1 + Rice×1 + Salad×1 + Drinks×4", originalPrice: 376, price: 278, tag: "立省¥98", tagEn: "Save ¥98" },
+      { name: "六人团聚套餐", nameEn: "Reunion Six Set", content: "河粉×3 + 米粉×2 + 牛扒×1 + 香茅鸡×2 + 菠萝饭×2 + 沙律×2 + 饮品×6", contentEn: "Pho×3 + Noodles×2 + Beef×1 + Chicken×2 + Rice×2 + Salad×2 + Drinks×6", originalPrice: 668, price: 488, tag: "立省¥180", tagEn: "Save ¥180" }
     ],
-    gallery: [
-      "img/saigon/storefront.jpg",
-      "img/saigon/hero.jpg",
-      "img/saigon/env_dining.jpg"
-    ]
+    gallery: ["img/saigon/storefront.jpg", "img/saigon/hero.jpg", "img/saigon/env_dining.jpg"]
   }
 ];
 
+// ==================== 从服务端加载餐厅数据 ====================
+async function loadRestaurantsFromServer() {
+  try {
+    const res = await fetch(API_BASE + '/api/restaurants');
+    const data = await res.json();
+    if (data.success && data.data) {
+      // 合并到 RESTAURANTS 数组中
+      data.data.forEach((serverR, i) => {
+        if (RESTAURANTS[i]) {
+          Object.assign(RESTAURANTS[i], serverR);
+        }
+      });
+    }
+  } catch (e) { /* 使用默认数据 */ }
+}
+
 // ==================== 红包系统 (API 版 - 所有设备共享数据) ====================
-const API_BASE = window.location.origin;  // API 与静态文件在同一服务器
+const API_BASE = window.location.origin;
 
 let STATS = { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
 let claimedRedpackets = [];
@@ -148,18 +155,15 @@ async function apiFetch(path, options, token) {
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = 'Bearer ' + token;
-    const res = await fetch(API_BASE + path, {
-      headers,
-      ...options,
-    });
+    const res = await fetch(API_BASE + path, { headers, ...options });
     return await res.json();
   } catch (e) {
     console.error('API调用失败:', path, e.message);
-    return { success: false, message: '网络连接失败，请检查网络后重试' };
+    return { success: false, message: L('网络连接失败，请检查网络后重试', 'Network error, please check your connection') };
   }
 }
 
-// 加���统计数据
+// 加载统计数据
 async function loadStats() {
   const res = await apiFetch('/api/stats');
   if (res.success) STATS = res.data;
@@ -171,79 +175,59 @@ async function recordScan() {
   if (res.success) STATS = res.data;
 }
 
-// 领取红包（异步，返回 Promise）
+// 领取红包
 async function claimRedpacket(phone, restaurantId) {
   const res = await apiFetch('/api/claim', {
     method: 'POST',
     body: JSON.stringify({ phone, restaurantId }),
   });
-  if (res.success) {
-    // 同步更新本地缓存
-    claimedRedpackets.push(res.redpacket);
-  }
+  if (res.success) claimedRedpackets.push(res.redpacket);
   return res;
 }
 
 // 获取某手机号的所有红包
 async function getMyRedpackets(phone) {
   const res = await apiFetch('/api/my?phone=' + encodeURIComponent(phone));
-  if (res.success) {
-    claimedRedpackets = res.data;
-    return res.data;
-  }
+  if (res.success) { claimedRedpackets = res.data; return res.data; }
   return [];
 }
 
-// 获取某手机号在某餐厅的红包
+// 获取某手机号在某餐厅的��包
 async function getRedpacketForRestaurant(phone, restaurantId) {
   const res = await apiFetch('/api/my?phone=' + encodeURIComponent(phone));
-  if (res.success) {
-    return res.data.find(r => r.restaurantId === restaurantId) || null;
-  }
+  if (res.success) return res.data.find(r => r.restaurantId === restaurantId) || null;
   return null;
 }
 
-// 导出红包二维码数据（紧凑JSON，店员扫码后解析）
+// 导出红包二维码数据
 function getRedpacketQRData(rp) {
   return JSON.stringify({
-    i: rp.id,
-    n: rp.pin,
-    r: rp.restaurantName,
-    a: rp.amount,
-    m: rp.minSpend,
-    e: new Date(rp.expireAt).toISOString().slice(0, 10),
-    p: rp.phoneMasked
+    i: rp.id, n: rp.pin, r: rp.restaurantName, a: rp.amount,
+    m: rp.minSpend, e: new Date(rp.expireAt).toISOString().slice(0, 10), p: rp.phoneMasked
   });
 }
 
-// 返回红包二维码图片URL（本地生成，不依赖外部API）
+// 返回红包二维码图片URL
 function getRedpacketQRUrl(rp) {
   const data = getRedpacketQRData(rp);
   if (typeof QRCodeLib !== 'undefined' && QRCodeLib.toDataURL) {
-    try {
-      return QRCodeLib.toDataURL(data, 200, 2);
-    } catch (e) {
-      console.error('QR生成失败:', e);
-    }
+    try { return QRCodeLib.toDataURL(data, 200, 2); } catch (e) {}
   }
   return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data);
 }
 
-// 渲染红包二维码到img元素
 function renderRedpacketQRImg(rp, imgElement) {
-  const url = getRedpacketQRUrl(rp);
-  imgElement.src = url;
+  imgElement.src = getRedpacketQRUrl(rp);
   imgElement.style.display = 'block';
 }
 
-// 核销红包（异步，管理员需传 token）
+// 核销红包
 async function useRedpacket(id, pin, token) {
   const res = await apiFetch('/api/verify', {
     method: 'POST',
     body: JSON.stringify({ id, pin }),
   }, token);
   if (res.success) {
-    // 更新本地缓存
     const idx = claimedRedpackets.findIndex(r => r.id.toUpperCase() === id.toUpperCase());
     if (idx >= 0) {
       claimedRedpackets[idx].used = true;
@@ -253,30 +237,64 @@ async function useRedpacket(id, pin, token) {
   return res;
 }
 
-// 根据ID查找红包（管理员使用，异步）
 async function findRedpacketById(id) {
   const res = await apiFetch('/api/list');
-  if (res.success) {
-    claimedRedpackets = res.data;
-    return res.data.find(r => r.id.toUpperCase() === id.toUpperCase()) || null;
-  }
+  if (res.success) { claimedRedpackets = res.data; return res.data.find(r => r.id.toUpperCase() === id.toUpperCase()) || null; }
   return null;
 }
 
-// 获取所有红包列表（异步）
 async function getAllRedpackets() {
   const res = await apiFetch('/api/list');
   if (res.success) claimedRedpackets = res.data;
   return claimedRedpackets;
 }
 
-// ==================== 导航 ====================
+// ==================== Admin API ====================
 
+// 上传图片（base64）
+async function adminUploadImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const data = e.target.result; // data:image/...;base64,...
+      const res = await apiFetch('/api/admin/upload', {
+        method: 'POST',
+        body: JSON.stringify({ filename: file.name, data }),
+      }, adminToken);
+      resolve(res);
+    };
+    reader.onerror = () => resolve({ success: false, message: 'Read file failed', messageZh: '文件读取失败' });
+    reader.readAsDataURL(file);
+  });
+}
+
+// 保存餐厅数据到服��端
+async function adminSaveRestaurant(id, data) {
+  return await apiFetch('/api/admin/restaurant', {
+    method: 'PUT',
+    body: JSON.stringify({ id, data }),
+  }, adminToken);
+}
+
+// 加载服务端餐厅数据
+async function adminLoadRestaurants() {
+  return await apiFetch('/api/admin/restaurants', {}, adminToken);
+}
+
+// 获取操作日志
+async function adminGetLogs(limit) {
+  return await apiFetch('/api/admin/logs?limit=' + (limit || 200), {}, adminToken);
+}
+
+// 清除操作日志
+async function adminClearLogs() {
+  return await apiFetch('/api/admin/clear-logs', { method: 'POST' }, adminToken);
+}
+
+// ==================== 导航 ====================
 function getNavUrl(restaurant) {
-  const name = restaurant.name;
-  const lat = restaurant.info.lat;
-  const lng = restaurant.info.lng;
-  const encodedName = encodeURIComponent(name);
+  const lat = restaurant.info.lat, lng = restaurant.info.lng;
+  const encodedName = encodeURIComponent(restaurant.name);
   const encodedAddr = encodeURIComponent(restaurant.info.address);
   return {
     amap: `https://uri.amap.com/navigation?to=${lng},${lat},${encodedName}&mode=car&callnative=1`,
@@ -289,32 +307,21 @@ function utf8ToBase64(str) {
   const encoder = new TextEncoder();
   const bytes = encoder.encode(str);
   let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
 }
 
 function base64ToUtf8(base64) {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return new TextDecoder().decode(bytes);
 }
 
-// ==================== 分享核销链接 ====================
-// 生成可分享的核销链接（跨设备可用）
 function getVerifyShareUrl(rp) {
   const verifyData = {
-    i: rp.id,
-    n: rp.pin,
-    r: rp.restaurantName,
-    a: rp.amount,
-    m: rp.minSpend,
-    e: new Date(rp.expireAt).toISOString().slice(0, 10),
-    p: rp.phoneMasked
+    i: rp.id, n: rp.pin, r: rp.restaurantName, a: rp.amount,
+    m: rp.minSpend, e: new Date(rp.expireAt).toISOString().slice(0, 10), p: rp.phoneMasked
   };
   const json = JSON.stringify(verifyData);
   const encoded = encodeURIComponent(utf8ToBase64(json));
@@ -333,8 +340,8 @@ async function clearAllData(token) {
 }
 
 // ==================== 初始化 ====================
-// 从服务器加载初始数据
 (async function init() {
+  await loadRestaurantsFromServer();
   await loadStats();
-  try { await getAllRedpackets(); } catch (e) { /* 非关键 */ }
+  try { await getAllRedpackets(); } catch (e) {}
 })();

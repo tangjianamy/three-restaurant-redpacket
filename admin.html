@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台 · 三店联动营销系统</title>
-<link rel="stylesheet" href="css/admin.css?v=20260801c">
+<link rel="stylesheet" href="css/admin.css?v=20260801d">
 </head>
 <body>
 
@@ -50,8 +50,8 @@
       <a href="#" class="active" onclick="switchTab('dashboard')">
         <span class="nav-icon">📊</span> 数据看板
       </a>
-      <a href="#" onclick="switchTab('restaurant')">
-        <span class="nav-icon">🍽️</span> 餐厅管理
+      <a href="#" onclick="switchTab('content')">
+        <span class="nav-icon">🖼️</span> 内容管理
       </a>
       <a href="#" onclick="switchTab('redpacket')">
         <span class="nav-icon">🧧</span> 红包设置
@@ -65,9 +65,12 @@
       <a href="#" onclick="switchTab('qrcode')">
         <span class="nav-icon">🔗</span> 活动二维码
       </a>
+      <a href="#" onclick="switchTab('logs')">
+        <span class="nav-icon">📜</span> 操作日志
+      </a>
     </nav>
     <div class="sidebar-footer">
-      <div style="margin-bottom:8px;">v2.2 · 手机端适配</div>
+      <div style="margin-bottom:8px;">v3.0 · 内容管理 · 双语</div>
       <div style="margin-bottom:8px;"><span id="sidebarUser"></span></div>
       <a href="#" onclick="doLogout()" style="color:#E74C3C;font-size:12px;text-decoration:none;">🚪 退出登录</a>
       <a href="#" onclick="clearAllDataAdmin()" style="color:#E74C3C;font-size:12px;text-decoration:none;margin-left:12px;">🗑️ 清除数据</a>
@@ -88,23 +91,23 @@
   <a href="#" onclick="switchTab('dashboard')" class="nav-item active" data-tab="dashboard">
     <span class="nav-icon">📊</span><span>看板</span>
   </a>
+  <a href="#" onclick="switchTab('content')" class="nav-item" data-tab="content">
+    <span class="nav-icon">🖼️</span><span>内容</span>
+  </a>
   <a href="#" onclick="switchTab('scan')" class="nav-item" data-tab="scan">
     <span class="nav-icon">📱</span><span>扫码</span>
   </a>
-  <a href="#" onclick="switchTab('records')" class="nav-item" data-tab="records">
-    <span class="nav-icon">📋</span><span>记录</span>
+  <a href="#" onclick="switchTab('logs')" class="nav-item" data-tab="logs">
+    <span class="nav-icon">���</span><span>日志</span>
   </a>
-  <a href="#" onclick="switchTab('qrcode')" class="nav-item" data-tab="qrcode">
-    <span class="nav-icon">🔗</span><span>二维码</span>
-  </a>
-  <a href="#" onclick="switchTab('restaurant')" class="nav-item" data-tab="restaurant">
-    <span class="nav-icon">⚙️</span><span>设置</span>
+  <a href="#" onclick="switchTab('settings')" class="nav-item" data-tab="settings">
+    <span class="nav-icon">��️</span><span>设置</span>
   </a>
 </nav>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="js/qrcode-lib.js?v=20260801c"></script>
-<script src="js/data.js?v=20260801c"></script>
-<script src="js/admin.js?v=20260801c"></script>
+<script src="js/qrcode-lib.js?v=20260801d"></script>
+<script src="js/data.js?v=20260801d"></script>
+<script src="js/admin.js?v=20260801d"></script>
 </body>
 </html>
