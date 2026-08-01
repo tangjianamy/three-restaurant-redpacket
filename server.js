@@ -19,7 +19,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
 // Supabase 配置
-const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
 
