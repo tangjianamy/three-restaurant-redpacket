@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台 · 三店联动营销系统</title>
+<link rel="stylesheet" href="css/admin.css?v=20260801">
+</head>
+<body>
+
+<div class="admin-layout">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h2>🧧 三店联动</h2>
+      <p>营销管理系统</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="active" onclick="switchTab('dashboard')">
+        <span class="nav-icon">📊</span> 数据看板
+      </a>
+      <a href="#" onclick="switchTab('restaurant')">
+        <span class="nav-icon">🍽️</span> 餐厅管理
+      </a>
+      <a href="#" onclick="switchTab('redpacket')">
+        <span class="nav-icon">🧧</span> 红包设置
+      </a>
+      <a href="#" onclick="switchTab('scan')">
+        <span class="nav-icon">📱</span> 扫码核销
+      </a>
+      <a href="#" onclick="switchTab('records')">
+        <span class="nav-icon">📋</span> 红包记录
+      </a>
+      <a href="#" onclick="switchTab('qrcode')">
+        <span class="nav-icon">🔗</span> 活动二维码
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="margin-bottom:8px;">v2.1 · 分享核销</div>
+      <a href="#" onclick="clearAllDataAdmin()" style="color:#E74C3C;font-size:12px;text-decoration:none;">🗑️ 清除所有数据</a>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content" id="mainContent">
+    <!-- 内容由 JS 动态渲染 -->
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" style="display:none;"></div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="js/qrcode-lib.js?v=20260801"></script>
+<script src="js/data.js?v=20260801"></script>
+<script src="js/admin.js?v=20260801"></script>
+</body>
+</html>

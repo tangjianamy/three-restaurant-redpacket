@@ -1,0 +1,1023 @@
+/* ========== 三店联动扫码领红包 · 样式表 ========== */
+
+:root {
+  --primary: #C0392B;
+  --primary-light: #FADBD8;
+  --gold: #D4A017;
+  --gold-light: #FFF8E7;
+  --bg: #FFF5F5;
+  --card-bg: #FFFFFF;
+  --text: #2C3E50;
+  --text-light: #7F8C8D;
+  --text-white: #FFFFFF;
+  --shadow: 0 2px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.6;
+}
+
+/* ===== 顶部 Header ===== */
+.hero {
+  background: linear-gradient(135deg, #C0392B 0%, #E74C3C 50%, #C0392B 100%);
+  padding: 36px 24px 28px;
+  text-align: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+
+.hero h1 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+.hero p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* ===== 餐厅卡片列表 ===== */
+.card-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.restaurant-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.restaurant-card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  position: relative;
+}
+
+.card-logo {
+  margin-left: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+  padding: 20px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.card-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.card-category {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.card-footer {
+  display: flex;
+  border-top: 1px solid #F0F0F0;
+  position: relative;
+  z-index: 1;
+  background: white;
+}
+
+.card-footer-item {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 12px;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.card-footer-item + .card-footer-item {
+  border-left: 1px solid #F0F0F0;
+}
+
+.card-arrow {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #CCC;
+  font-size: 20px;
+  transition: transform 0.2s;
+  z-index: 1;
+}
+
+/* ===== 详情页 ===== */
+.detail-page {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #FFF;
+  z-index: 100;
+  overflow-y: auto;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.detail-page.active { display: block; }
+
+.detail-back {
+  position: fixed;
+  top: 16px; left: 16px;
+  z-index: 10;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border: none;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.detail-hero {
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  padding: 24px 20px;
+  color: white;
+  position: relative;
+}
+
+.detail-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  pointer-events: none;
+}
+
+.detail-hero-content { position: relative; z-index: 1; }
+
+.detail-hero h2 {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.detail-hero .subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+.detail-body { padding: 20px; }
+
+/* 信息栏 */
+.info-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  flex: 1;
+  min-width: calc(50% - 5px);
+  background: #F8F9FA;
+  padding: 12px 14px;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.info-item .icon { font-size: 18px; flex-shrink: 0; }
+
+/* 简介 */
+.section { margin-bottom: 24px; }
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  display: inline-block;
+  background: var(--accent, var(--primary));
+}
+
+.desc-text {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.8;
+}
+
+.highlight-badge {
+  display: inline-block;
+  background: var(--gold-light);
+  color: var(--gold);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+/* 菜品卡片 */
+.dish-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dish-card {
+  background: #F8F9FA;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: center;
+  transition: transform 0.15s;
+}
+
+.dish-card:active { transform: scale(0.97); }
+
+.dish-emoji {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.dish-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.dish-desc {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.dish-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* 套餐卡片 */
+.combo-card {
+  background: linear-gradient(135deg, #FFF 0%, #FFF8F8 100%);
+  border: 1.5px solid #F5E0E0;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.combo-card:last-child { margin-bottom: 0; }
+
+.combo-tag {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: var(--primary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.combo-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding-right: 70px;
+}
+
+.combo-content {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.combo-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.combo-price {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.combo-original {
+  font-size: 13px;
+  color: #AAA;
+  text-decoration: line-through;
+}
+
+/* 地图与导航 */
+.map-section {
+  margin-bottom: 24px;
+}
+
+.map-placeholder {
+  height: 180px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-placeholder::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='180'%3E%3Crect fill='%23f0f0f0' width='400' height='180'/%3E%3Ctext x='200' y='90' text-anchor='middle' fill='%23ccc' font-size='14'%3E📍 地图预览%3C/text%3E%3C/svg%3E");
+  background-size: cover;
+}
+
+.map-pin {
+  font-size: 32px;
+  position: relative;
+  z-index: 1;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.15s;
+  text-decoration: none;
+  color: white;
+}
+
+.nav-btn:active { transform: scale(0.97); }
+
+.nav-btn-amap { background: #0091FF; }
+.nav-btn-bmap { background: #3385FF; }
+
+/* ===== 红包弹窗 ===== */
+.redpacket-float {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: linear-gradient(135deg, #FF4D4F 0%, #FF7875 100%);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(255, 77, 79, 0.4);
+  animation: float 2s ease-in-out infinite;
+  display: none;
+  white-space: nowrap;
+}
+
+.redpacket-float.visible { display: flex; align-items: center; gap: 8px; }
+
+.redpacket-float span { font-size: 22px; }
+
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+
+/* 红包弹窗 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 380px;
+  overflow: hidden;
+  animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+  from { transform: scale(0.9) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #FF4D4F, #FF7875);
+  padding: 28px 24px;
+  text-align: center;
+  color: white;
+}
+
+.modal-header .rp-icon { font-size: 52px; margin-bottom: 8px; }
+
+.modal-header .rp-title {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.modal-header .rp-amount {
+  font-size: 42px;
+  font-weight: 900;
+  margin: 8px 0;
+}
+
+.modal-header .rp-rule {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.modal-body { padding: 20px 24px; }
+
+.modal-body .input-group { margin-bottom: 16px; }
+
+.modal-body label {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.modal-body input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #E0E0E0;
+  border-radius: var(--radius-xs);
+  font-size: 15px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.modal-body input:focus { border-color: var(--primary); }
+
+.modal-body .btn-claim {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #FF4D4F, #FF7875);
+  color: white;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.modal-body .btn-claim:active { transform: scale(0.98); }
+
+.modal-body .btn-claim:disabled {
+  background: #CCC;
+  cursor: not-allowed;
+}
+
+.modal-footer {
+  padding: 0 24px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #AAA;
+}
+
+/* 领取成功 */
+.claim-success {
+  display: none;
+  text-align: center;
+  padding: 20px;
+}
+
+.claim-success.active { display: block; }
+
+.claim-success .cs-icon { font-size: 56px; margin-bottom: 12px; }
+
+.claim-success .cs-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #27AE60;
+  margin-bottom: 8px;
+}
+
+.claim-success .cs-amount {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.claim-success .cs-code {
+  font-size: 24px;
+  font-weight: 700;
+  color: #555;
+  background: #F5F5F5;
+  padding: 8px 20px;
+  border-radius: 8px;
+  display: inline-block;
+  margin: 12px 0;
+  letter-spacing: 2px;
+}
+
+.claim-success .cs-expire {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+/* ===== 底部 ===== */
+.footer {
+  text-align: center;
+  padding: 24px;
+  color: #BBB;
+  font-size: 12px;
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 14px;
+  z-index: 999;
+  animation: toastIn 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { top: -60px; opacity: 0; }
+  to { top: 20px; opacity: 1; }
+}
+
+/* ===== 标签切换 ===== */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ===== 大众点评评分 ===== */
+.card-dp {
+  position: absolute;
+  right: 44px;
+  top: 22px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.detail-dianping {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+/* ===== 我的红包入口 ===== */
+.myrp-entry {
+  display: none;
+  margin: 0 16px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #FF4D4F, #FF7875);
+  color: white;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: -8px;
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 4px 12px rgba(255,77,79,0.3);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.myrp-entry.visible { display: flex; }
+
+.myrp-entry .count {
+  background: rgba(255,255,255,0.3);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+/* ===== 详情页底部红包栏 ===== */
+.detail-redpacket-bar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  color: white;
+  cursor: pointer;
+  z-index: 50;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.15);
+  transition: background 0.3s;
+}
+
+.detail-redpacket-bar.visible { display: flex; }
+
+.detail-rp-icon { font-size: 28px; flex-shrink: 0; }
+
+.detail-rp-info { flex: 1; }
+
+.detail-rp-info small {
+  display: block;
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.detail-rp-arrow { font-size: 22px; opacity: 0.7; }
+
+/* ===== 我的红包列表 ===== */
+.myrp-card {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #F0F0F0;
+}
+
+.myrp-card.used { opacity: 0.6; }
+.myrp-card.expired { opacity: 0.5; }
+
+.myrp-left {
+  width: 120px;
+  padding: 16px 14px;
+  border-left: 4px solid #CCC;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.myrp-store {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.myrp-amount {
+  font-size: 28px;
+  font-weight: 900;
+  color: #E74C3C;
+}
+
+.myrp-rule {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.myrp-right {
+  flex: 1;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.myrp-code {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+}
+
+.myrp-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.myrp-status.active { background: #D5F5E3; color: #27AE60; }
+.myrp-status.used { background: #FDEBD0; color: #E67E22; }
+.myrp-status.expired { background: #FADBD8; color: #E74C3C; }
+
+.myrp-date { font-size: 11px; color: #AAA; }
+
+.myrp-share-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px dashed #CCC;
+  border-radius: 8px;
+  background: #FFF;
+  color: #555;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.myrp-share-btn:active {
+  background: #F0F0F0;
+  border-color: #27AE60;
+  color: #27AE60;
+}
+
+/* ===== 使用说明 ===== */
+.usage-guide {
+  background: #FEF9E7;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.usage-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.usage-steps { display: flex; flex-direction: column; gap: 10px; }
+
+.usage-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #555;
+}
+
+.step-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 360px) {
+  .hero h1 { font-size: 22px; }
+  .dish-grid { grid-template-columns: 1fr; }
+  .card-name { font-size: 16px; }
+  .myrp-left { width: 100px; }
+  .myrp-amount { font-size: 24px; }
+}
+
+/* ===== 餐厅封面图 ===== */
+.card-cover {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.18;
+  border-radius: var(--radius);
+  z-index: 0;
+}
+
+/* ===== 菜品图片 ===== */
+.dish-img {
+  width: 100%;
+  height: 100px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* ===== 餐厅环境图集 ===== */
+.gallery-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 12px;
+  scroll-snap-type: x mandatory;
+}
+
+.gallery-row img {
+  height: 120px;
+  width: auto;
+  border-radius: 10px;
+  scroll-snap-align: start;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ===== 二维码 & PIN 显示 ===== */
+.cs-qr-wrap {
+  text-align: center;
+  margin: 12px 0;
+}
+
+.cs-pin-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0 8px;
+}
+
+.cs-pin-label {
+  font-size: 13px;
+  color: #888;
+}
+
+.cs-pin-num {
+  font-size: 32px;
+  font-weight: 900;
+  color: #E74C3C;
+  background: #FFF5F5;
+  padding: 4px 16px;
+  border-radius: 8px;
+  letter-spacing: 6px;
+  font-family: 'Courier New', monospace;
+}
+
+/* ===== 我的红包 · 二维码 ===== */
+.myrp-qr-wrap {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.myrp-qr-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  border: 1px solid #F0F0F0;
+}
+
+.myrp-qr-fallback {
+  width: 100px;
+  height: 100px;
+  background: #F8F9FA;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #CCC;
+  margin: 0 auto;
+}
+
+.myrp-pin-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.myrp-pin-label {
+  font-size: 11px;
+  color: #AAA;
+}
+
+.myrp-pin-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: #E74C3C;
+  letter-spacing: 3px;
+  font-family: 'Courier New', monospace;
+}

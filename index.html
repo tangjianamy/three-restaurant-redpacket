@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>横琴三店联动 · 扫码领红包</title>
+<style>
+  /* 内联关键样式：确保即使 CSS 文件加载失败，页面也不至于空白 */
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#FFF5F5;color:#2C3E50;max-width:480px;margin:0 auto;min-height:100vh}
+  .hero{background:linear-gradient(135deg,#C0392B 0%,#E74C3C 50%,#C0392B 100%);padding:36px 24px 28px;text-align:center;color:white}
+  .hero h1{font-size:28px;font-weight:800;margin-bottom:8px}
+  .hero p{font-size:14px;opacity:.9}
+  .hero-badge{display:inline-block;background:rgba(255,255,255,.2);padding:6px 16px;border-radius:20px;font-size:13px;margin-bottom:14px}
+  .card-list{padding:16px}
+  .loading-hint{text-align:center;padding:40px 20px;color:#999;font-size:14px}
+</style>
+<link rel="stylesheet" href="css/style.css?v=20260801b">
+</head>
+<body>
+
+<!-- ===== 顶部 Hero ===== -->
+<div class="hero">
+  <div class="hero-badge">🧧 横琴美食联盟</div>
+  <h1>三店联动</h1>
+  <p>每家店都有专属红包，逛哪家领哪家</p>
+</div>
+
+<!-- JS 未加载时的提示，JS 加载后会被替换 -->
+<div class="card-list" id="cardList">
+  <div class="loading-hint" id="loadingHint">正在加载餐厅信息...</div>
+</div>
+
+<noscript>
+  <div style="text-align:center;padding:40px 20px;color:#C0392F;">
+    <p style="font-size:18px;font-weight:700;margin-bottom:8px;">⚠️ 需要启用 JavaScript</p>
+    <p style="font-size:14px;color:#666;">请在浏览器设置中开启 JavaScript 后刷新页面</p>
+  </div>
+</noscript>
+
+<!-- 我的红包入口 -->
+<div class="myrp-entry" id="myRedpacketsBtn" onclick="showMyRedpackets()">
+  🎫 我的红包 <span class="count">0</span>
+</div>
+
+<!-- ===== 餐厅详情页 ===== -->
+<div class="detail-page" id="detailPage">
+  <button class="detail-back" onclick="closeDetail()">✕</button>
+  <div class="detail-hero" id="detailHero">
+    <div class="detail-hero-content">
+      <h2 id="detailName"></h2>
+      <div class="subtitle" id="detailSubtitle"></div>
+      <div class="detail-dianping" id="detailDianping"></div>
+    </div>
+  </div>
+  <div class="detail-body">
+    <!-- 基础信息 -->
+    <div class="info-bar" id="detailInfo"></div>
+
+    <!-- 简介 -->
+    <div class="section">
+      <div class="section-title section-accent">餐厅简介</div>
+      <div class="desc-text" id="detailDesc"></div>
+      <div class="highlight-badge" id="detailHighlight"></div>
+    </div>
+
+    <!-- 环境图集 -->
+    <div class="section" id="detailGallery"></div>
+
+    <!-- 招牌菜 -->
+    <div class="section">
+      <div class="section-title section-accent">招牌推荐</div>
+      <div class="dish-grid" id="detailDishes"></div>
+    </div>
+
+    <!-- 优惠套餐 -->
+    <div class="section">
+      <div class="section-title section-accent">优惠套餐</div>
+      <div id="detailCombos"></div>
+    </div>
+
+    <!-- 地图与导航 -->
+    <div class="section map-section">
+      <div class="section-title section-accent">到店导航</div>
+      <div class="map-placeholder" id="mapPlaceholder">
+        <div class="map-pin">📍</div>
+      </div>
+      <div class="nav-buttons" id="navButtons"></div>
+    </div>
+
+    <div style="height:80px;"></div><!-- 给底部红包栏留空间 -->
+  </div>
+
+  <!-- ===== 底部红包栏（每家店专属） ===== -->
+  <div class="detail-redpacket-bar" id="detailRedpacketBar" onclick="showClaimModal()">
+    <div class="detail-rp-icon">🧧</div>
+    <div class="detail-rp-info" id="detailRedpacketInfo"></div>
+    <div class="detail-rp-arrow">›</div>
+  </div>
+</div>
+
+<!-- ===== 红包领取弹窗 ===== -->
+<div class="modal-overlay" id="claimModal">
+  <div class="modal">
+    <div class="modal-header" style="background:linear-gradient(135deg,#FF4D4F,#FF7875);">
+      <div class="rp-icon">🧧</div>
+      <div class="rp-title" id="claimRestaurantName"></div>
+      <div class="rp-amount" id="claimAmount"></div>
+      <div class="rp-rule" id="claimDesc"></div>
+    </div>
+    <div class="modal-body" id="claimForm">
+      <div class="input-group" id="phoneGroup">
+        <label>手机号码</label>
+        <input type="tel" id="phoneInput" placeholder="请输入手机号领取红包" maxlength="11">
+      </div>
+      <button class="btn-claim" id="claimBtn" onclick="doClaim()">立即领取</button>
+    </div>
+    <div class="claim-success" id="claimSuccess">
+      <div class="cs-icon">🎉</div>
+      <div class="cs-title">领取成功！</div>
+      <div class="cs-qr-wrap">
+        <img id="rpQRImg" src="" alt="核销二维码" style="display:none;width:160px;height:160px;margin:0 auto;border-radius:12px;border:2px solid #F0F0F0;">
+      </div>
+      <div class="cs-pin-row">
+        <span class="cs-pin-label">确认码</span>
+        <span class="cs-pin-num" id="rpPIN">----</span>
+      </div>
+      <div class="cs-code" id="rpCode">到店出示二维码核销</div>
+      <div class="cs-expire" id="rpExpire">有效期至：---</div>
+      <div style="margin-top:8px;font-size:13px;color:#888;" id="rpStore"></div>
+      <div style="margin-top:12px;font-size:13px;color:#555;">
+        到店消费时向店员出示上方二维码<br>店员扫码后即可抵扣
+      </div>
+      <button class="btn-claim" style="margin-top:14px;background:#27AE60;" onclick="closeClaimModal()">
+        好的，我知道了
+      </button>
+    </div>
+    <div class="modal-footer">
+      <a href="#" onclick="closeClaimModal();return false;" style="color:#AAA;">关闭</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 我的红包页面 ===== -->
+<div class="detail-page" id="myRedpacketsPage">
+  <button class="detail-back" onclick="closeMyRedpackets()">←</button>
+  <div class="detail-hero" style="background:linear-gradient(135deg,#FF4D4F,#FF7875);height:160px;">
+    <div class="detail-hero-content">
+      <h2>🎫 我的红包</h2>
+      <div class="subtitle">到店出示券码即可抵扣</div>
+    </div>
+  </div>
+  <div class="detail-body" id="myRpList"></div>
+</div>
+
+<!-- ===== 底部 ===== -->
+<div class="footer">横琴美食联盟 · 三店联动</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" style="display:none;"></div>
+
+  <script src="js/qrcode-lib.js?v=20260801b"></script>
+  <script src="js/data.js?v=20260801b"></script>
+  <script src="js/app.js?v=20260801b"></script>
+</body>
+</html>

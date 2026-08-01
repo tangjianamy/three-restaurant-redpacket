@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>红包核销验证</title>
+<link rel="stylesheet" href="css/style.css?v=20260801">
+<style>
+  body { background: #F5F5F5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .verify-container { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+  .verify-card { background: #FFF; border-radius: 16px; padding: 32px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+  .verify-card.error { border: 2px solid #E74C3C; }
+  .verify-card.used { border: 2px solid #F39C12; }
+  .verify-card.expired { border: 2px solid #95A5A6; }
+  .verify-card.ok { border: 2px solid #27AE60; }
+  .v-icon { font-size: 56px; margin-bottom: 12px; }
+  .v-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .v-amount { font-size: 42px; font-weight: 800; color: #E74C3C; margin: 12px 0; }
+  .v-store { font-size: 16px; color: #555; margin-bottom: 4px; }
+  .v-meta { font-size: 13px; color: #888; margin: 4px 0; }
+  .v-pin { display: inline-block; background: #F0F0F0; padding: 6px 16px; border-radius: 20px; font-size: 20px; font-weight: 700; letter-spacing: 4px; margin: 12px 0; color: #333; }
+  .btn-verify { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; color: #FFF; cursor: pointer; margin-top: 16px; }
+  .btn-verify.primary { background: #27AE60; }
+  .btn-verify.danger { background: #E74C3C; }
+  .btn-verify:active { transform: scale(0.98); }
+  .v-error-detail { color: #E74C3C; font-size: 14px; margin-top: 8px; }
+  .v-success-anim { animation: popIn 0.4s ease-out; }
+  @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .v-divider { border: none; border-top: 1px dashed #E0E0E0; margin: 16px 0; }
+  .small-hint { font-size: 12px; color: #AAA; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="verify-container" id="verifyContainer">
+  <div class="verify-card" id="verifyCard">
+    <div class="v-icon" id="vIcon">⏳</div>
+    <div class="v-title" id="vTitle">正在解析红包信息...</div>
+    <div id="vContent"></div>
+  </div>
+  <div class="small-hint" style="text-align:center;">
+    三店联动 · 店员核销页面<br>此页面由顾客分享，用于到店核销红包
+  </div>
+</div>
+
+<script src="js/qrcode-lib.js?v=20260801"></script>
+<script src="js/data.js?v=20260801"></script>
+<script>
+// 尝试从 URL 参数解析红包数据
+// 支持两种格式: ?d=<base64> 或 ?pin=XXXX&phone=XXXX&rid=X
+let rpData = null;
+
+function base64ToUtf8(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+async function parseURL() {
+  const params = new URLSearchParams(window.location.search);
+  
+  const encoded = params.get('d');
+  if (encoded) {
+    try {
+      const json = base64ToUtf8(decodeURIComponent(encoded));
+      rpData = JSON.parse(json);
+      return true;
+    } catch(e) {
+      showError('红包数据无法解析，链接可能已损坏');
+      return false;
+    }
+  }
+  
+  const pin = params.get('pin');
+  const phone = params.get('phone');
+  if (pin && phone) {
+    await getAllRedpackets();
+    rpData = claimedRedpackets.find(r => r.pin === pin && r.phone === phone);
+    if (!rpData) {
+      rpData = claimedRedpackets.find(r => r.pin === pin);
+    }
+    if (!rpData) {
+      showError('未找到该红包，请确认PIN码和手机号正确，或让顾客出示二维码');
+      return false;
+    }
+    return true;
+  }
+  
+  const id = params.get('id');
+  if (id) {
+    rpData = await findRedpacketById(id);
+    if (!rpData) {
+      showError('未找到该红包记录，可能已被清除或链接过期');
+      return false;
+    }
+    return true;
+  }
+  
+  showError('缺少红包验证参数，请让顾客重新分享核销链接');
+  return false;
+}
+
+function showError(msg) {
+  document.getElementById('vIcon').textContent = '❌';
+  document.getElementById('vTitle').textContent = '验证失败';
+  document.getElementById('vTitle').style.color = '#E74C3C';
+  document.getElementById('vContent').innerHTML = `<div class="v-error-detail">${msg}</div>`;
+  document.getElementById('verifyCard').classList.add('error');
+}
+
+function showRedpacketInfo() {
+  const now = new Date();
+  const expired = new Date(rpData.expireAt) < now;
+  
+  if (rpData.used) {
+    document.getElementById('verifyCard').classList.add('used');
+    document.getElementById('vIcon').textContent = '⚠️';
+    document.getElementById('vTitle').textContent = '该红包已核销';
+    document.getElementById('vTitle').style.color = '#F39C12';
+    document.getElementById('vContent').innerHTML = `
+      <div class="v-store">${rpData.restaurantName}</div>
+      <div class="v-amount" style="color:#999;">¥${rpData.amount}</div>
+      <div class="v-meta">已于 ${new Date(rpData.usedAt).toLocaleString('zh-CN')} 核销</div>
+      <div class="v-meta">不可重复使用</div>
+    `;
+    return;
+  }
+  
+  if (expired) {
+    document.getElementById('verifyCard').classList.add('expired');
+    document.getElementById('vIcon').textContent = '⏰';
+    document.getElementById('vTitle').textContent = '红包已过期';
+    document.getElementById('vTitle').style.color = '#95A5A6';
+    document.getElementById('vContent').innerHTML = `
+      <div class="v-store">${rpData.restaurantName}</div>
+      <div class="v-amount" style="color:#999;">¥${rpData.amount}</div>
+      <div class="v-meta">有效期至 ${new Date(rpData.expireAt).toLocaleDateString('zh-CN')}</div>
+    `;
+    return;
+  }
+  
+  // 可核销
+  document.getElementById('verifyCard').classList.add('ok');
+  document.getElementById('vIcon').textContent = '✅';
+  document.getElementById('vTitle').textContent = '验证通过 · 可核销';
+  document.getElementById('vTitle').style.color = '#27AE60';
+  document.getElementById('vContent').innerHTML = `
+    <div class="v-store">${rpData.restaurantName}</div>
+    <div class="v-amount">¥${rpData.amount}</div>
+    <div class="v-meta">满¥${rpData.minSpend}可用</div>
+    <div class="v-meta">有效期至 ${new Date(rpData.expireAt).toLocaleDateString('zh-CN')}</div>
+    <div class="v-pin">${rpData.pin}</div>
+    <div class="v-meta">用户: ${rpData.phoneMasked}</div>
+    <hr class="v-divider">
+    <button class="btn-verify primary" onclick="doVerify()">✅ 确认核销 ¥${rpData.amount}</button>
+  `;
+}
+
+async function doVerify() {
+  if (!confirm('确定核销此红包吗？核销后不可撤销。')) return;
+  
+  const rp = await findRedpacketById(rpData.id);
+  if (!rp || rp.used) {
+    alert('该红包已被核销或不存在');
+    location.reload();
+    return;
+  }
+  
+  await useRedpacket(rpData.id);
+  
+  // 管理员本地记录
+  const usedCodes = JSON.parse(localStorage.getItem('s3_admin_verified') || '[]');
+  if (!usedCodes.includes(rpData.id)) {
+    usedCodes.push(rpData.id);
+    localStorage.setItem('s3_admin_verified', JSON.stringify(usedCodes));
+  }
+  
+  document.getElementById('verifyCard').classList.remove('ok');
+  document.getElementById('verifyCard').classList.add('used');
+  document.getElementById('vIcon').textContent = '🎉';
+  document.getElementById('vTitle').textContent = '核销成功！';
+  document.getElementById('vTitle').style.color = '#27AE60';
+  document.getElementById('vContent').innerHTML = `
+    <div class="v-store">${rpData.restaurantName}</div>
+    <div class="v-amount" style="color:#999;">¥${rpData.amount}</div>
+    <div class="v-meta">核销时间: ${new Date().toLocaleString('zh-CN')}</div>
+    <div class="v-meta" style="color:#27AE60;margin-top:8px;">结账时直接抵扣 ¥${rpData.amount}</div>
+    <div class="v-success-anim" style="font-size:48px;margin:16px 0;">✅</div>
+  `;
+}
+
+function goBack() {
+  window.history.back();
+}
+
+// 页面加载
+parseURL().then(() => {
+  if (rpData) showRedpacketInfo();
+});
+</script>
+
+</body>
+</html>
