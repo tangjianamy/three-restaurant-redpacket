@@ -287,7 +287,9 @@ const db = {
 
   async insertRedpacket(rp) {
     if (USE_SUPABASE) {
-      await supabaseRequest('POST', 'redpackets', null, redpacketToDb(rp));
+      try {
+        await supabaseRequest('POST', 'redpackets', null, redpacketToDb(rp));
+      } catch (e) { console.error('Insert redpacket to Supabase failed (non-fatal):', e.message); }
     } else {
       await writeJSON(CLAIMED_FILE, claimedRedpackets);
     }
@@ -835,6 +837,38 @@ async function handleAPI(req, res, pathname, query) {
         version: '4.0',
         storage: USE_SUPABASE ? 'supabase' : 'json-file'
       });
+    }
+
+    // ====== GET /api/diagnose ======
+    if (req.method === 'GET' && pathname === '/api/diagnose') {
+      const diag = { useSupabase: USE_SUPABASE, supabaseUrl: SUPABASE_URL || '(not set)', tests: {} };
+      if (USE_SUPABASE) {
+        // Test 1: GET stats
+        try {
+          const rows = await supabaseRequest('GET', 'stats', { id: 'eq.1' });
+          diag.tests.getStats = { ok: true, rows: rows ? rows.length : 0 };
+        } catch (e) { diag.tests.getStats = { ok: false, error: e.message }; }
+        // Test 2: GET redpackets
+        try {
+          const rows = await supabaseRequest('GET', 'redpackets', { limit: '1' });
+          diag.tests.getRedpackets = { ok: true, rows: rows ? rows.length : 0 };
+        } catch (e) { diag.tests.getRedpackets = { ok: false, error: e.message }; }
+        // Test 3: POST stats (upsert)
+        try {
+          const dbData = statsToDb(stats);
+          dbData.id = 1;
+          await supabaseRequest('POST', 'stats', null, dbData, { upsert: true });
+          diag.tests.postStats = { ok: true };
+        } catch (e) { diag.tests.postStats = { ok: false, error: e.message }; }
+        // Test 4: Check URL format
+        diag.tests.urlCheck = {
+          url: SUPABASE_URL,
+          hasRestV1: SUPABASE_URL.includes('/rest/v1'),
+          endsWithSlash: SUPABASE_URL.endsWith('/'),
+          expectedFormat: 'https://xxxx.supabase.co'
+        };
+      }
+      return sendJSON(res, diag);
     }
 
     return sendJSON(res, { success: false, message: 'Unknown API', messageZh: '未知接口' }, 404);
