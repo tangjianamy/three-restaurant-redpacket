@@ -10,7 +10,7 @@ const RESTAURANTS = [
     category: "意式·葡式料理",
     key: "italian",
     logo: "🍝",
-    cover: "",
+    cover: "img/italian/storefront.png",
     color: "#C0392B",
     colorLight: "#FADBD8",
     dianping: { rating: "4.2", avgPrice: "¥121/人", rank: "珠海提拉米苏第10名", dishes: 137 },
@@ -29,19 +29,23 @@ const RESTAURANTS = [
     description: "意葡餐厅自2019年珠海横琴中央汇店起步，2023年进驻横琴励骏庞都店，秉承「零添加剂，健康饮食」的宗旨。以地中海美食为主题，涵盖意大利、葡萄牙、西班牙菜。2021-2024年连续四年获评放心消费承诺单位及诚信店，2023年荣登大湾区杂志专访，获评珠海市「唐家肴」美食大赛银奖。大众点评4.2分，137道网友推荐菜，提拉米苏位列珠海第10名。",
     highlight: "大众点评4.2分 · 珠海提拉米苏TOP10 · 连续四年诚信店 · 唐家肴银奖",
     dishes: [
-      { name: "葡式柠檬花甲", price: 68, desc: "网友推荐TOP1，新鲜花甲配柠檬白酒", emoji: "🍋", dpRank: 1, img: "" },
-      { name: "提拉米苏", price: 38, desc: "珠海第10名，经典意式手工甜品", emoji: "🍰", dpRank: 2, img: "" },
-      { name: "意式千层面", price: 78, desc: "网友推荐TOP3，多层手工面皮", emoji: "🧀", dpRank: 3, img: "" },
-      { name: "美味鹅肝牛柳扒", price: 188, desc: "进口牛柳配鹅肝，奢华之选", emoji: "🥩", dpRank: 4, img: "" },
-      { name: "意式萨拉米披萨", price: 88, desc: "经典萨拉米，石炉现烤薄底", emoji: "🍕", dpRank: 5, img: "" },
-      { name: "招牌海虾黑面", price: 78, desc: "墨鱼汁意面配大虾，招牌必点", emoji: "🦐", dpRank: 6, img: "" }
+      { name: "葡式柠檬花甲", price: 68, desc: "网友推荐TOP1，新鲜花甲配柠檬白酒", emoji: "🍋", dpRank: 1, img: "img/italian/lemon_clams.png" },
+      { name: "提拉米苏", price: 38, desc: "珠海第10名，经典意式手工甜品", emoji: "🍰", dpRank: 2, img: "img/italian/tiramisu.png" },
+      { name: "意式千层面", price: 78, desc: "网友推荐TOP3，多层手工面皮", emoji: "🧀", dpRank: 3, img: "img/italian/lasagna.png" },
+      { name: "美味鹅肝牛柳扒", price: 188, desc: "进口牛柳配鹅肝，奢华之选", emoji: "🥩", dpRank: 4, img: "img/italian/beef_foie_gras.png" },
+      { name: "意式萨拉米披萨", price: 88, desc: "经典萨拉米，石炉现烤薄底", emoji: "🍕", dpRank: 5, img: "img/italian/salami_pizza.png" },
+      { name: "招牌海虾黑面", price: 78, desc: "墨鱼汁意面配大虾，招牌必点", emoji: "🦐", dpRank: 6, img: "img/italian/squid_ink_pasta.png" }
     ],
     combos: [
       { name: "双人浪漫套餐", content: "萨拉米披萨×1 + 千层面×1 + 鹅肝牛柳扒×1 + 饮品×2 + 提拉米苏×2", originalPrice: 538, price: 388, tag: "立省¥150" },
       { name: "四人欢聚套餐", content: "披萨×2 + 千层面×2 + 柠檬花甲×1 + 烤鸡×1 + 饮品×4", originalPrice: 678, price: 498, tag: "立省¥180" },
       { name: "六人派对套餐", content: "牛柳扒×2 + 披萨×2 + 千层面×3 + 花甲×2 + 饮品×6 + 提拉米苏×3", originalPrice: 1288, price: 888, tag: "立省¥400" }
     ],
-    gallery: []
+    gallery: [
+      "img/italian/storefront.png",
+      "img/italian/interior.png",
+      "img/italian/terrace.png"
+    ]
   },
   {
     id: 2,

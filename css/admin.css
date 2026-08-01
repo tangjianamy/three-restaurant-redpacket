@@ -692,11 +692,13 @@ body {
   background: rgba(0,0,0,0.5);
   z-index: 950;
   opacity: 0;
+  pointer-events: none;  /* 关键：不拦截触摸事件 */
   transition: opacity 0.3s;
 }
 
 .sidebar-overlay.active {
   opacity: 1;
+  pointer-events: auto;  /* 激活时才拦截触摸 */
 }
 
 /* ===== 移动端底部导航 ===== */
