@@ -586,7 +586,7 @@ function renderQRCode(main) {
     '<div class="content-card"><div class="card-body"><div class="qr-display">' +
       '<div class="qr-code" id="qrContainer"><span style="font-size:14px;color:#AAA;">' + L('生成中...', 'Generating...') + '</span></div>' +
       '<h4 style="margin-bottom:8px;">' + L('扫一扫，查看三店信息 · 领红包', 'Scan to view restaurants & claim red packets') + '</h4>' +
-      '<div class="qr-tip">' + L('打印张贴在店内，微信和大众点评扫码均可打开。', 'Print and post in stores. Works with WeChat and Dianping.') + '</div>' +
+      '<div class="qr-tip">' + L('打印张贴在店内，微信扫码均可打开。', 'Print and post in stores. Works with WeChat and Dianping.') + '</div>' +
       '<div class="qr-url">' + L('活动链接', 'Campaign URL') + '：<span id="qrUrl">' + currentUrl + '</span></div>' +
       '<div style="margin-top:16px;"><button class="btn btn-primary" onclick="copyQRUrl()">📋 ' + L('复制链接', 'Copy Link') + '</button> <button class="btn btn-outline" onclick="downloadQR()" style="margin-left:8px;">💾 ' + L('下载二维码', 'Download QR') + '</button></div>' +
     '</div></div></div>';
