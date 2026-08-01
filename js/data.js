@@ -159,7 +159,7 @@ async function apiFetch(path, options, token) {
     return await res.json();
   } catch (e) {
     console.error('API调用失败:', path, e.message);
-    return { success: false, message: L('网络连接失败，请检查网络后重试', 'Network error, please check your connection') };
+    return { success: false, message: '网络连接失败，请检查网络后重试' };
   }
 }
 

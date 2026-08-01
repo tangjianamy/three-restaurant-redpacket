@@ -46,11 +46,11 @@ function updateHeroLang(lang) {
 // 页面加载
 document.addEventListener('DOMContentLoaded', async function() {
   try {
-    recordScan();
+    recordScan().catch(function(){});
     var phone = null;
     try { phone = localStorage.getItem('s3_user_phone'); } catch(e) {}
-    if (phone) { currentUserId = phone; await updateUserUI(); }
-    renderCardList();
+    if (phone) { currentUserId = phone; try { await updateUserUI(); } catch(e) {} }
+    try { renderCardList(); } catch(e) {}
     updateLangBtns(currentLang);
     updateHeroLang(currentLang);
   } catch(e) {
