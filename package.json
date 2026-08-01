@@ -1,0 +1,13 @@
+{
+  "name": "three-restaurant-redpacket",
+  "version": "1.0.0",
+  "description": "三店联动扫码领红包营销系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
