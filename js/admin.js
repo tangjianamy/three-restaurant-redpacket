@@ -200,6 +200,57 @@ function renderContentEditors() {
     html += '<div class="restaurant-editor">' +
       '<div class="editor-header"><h4><span class="color-dot" style="background:' + r.color + '"></span>' + escHtml(r.name) + ' · ' + escHtml(r.subtitle) + '</h4><span class="tab-badge" style="background:' + r.colorLight + ';color:' + r.color + ';">' + escHtml(r.category) + '</span></div>';
 
+    // 基本信息
+    html += '<div class="cms-section"><h5>📋 ' + L('餐厅基本信息', 'Basic Information') + '</h5>' +
+      '<div class="form-grid-2col">' +
+        '<div class="form-group"><label>' + L('餐厅名称（中文）', 'Name (CN)') + '</label><input value="' + escHtml(r.name) + '" onchange="updateRestaurant(' + idx + ',\'name\',this.value)"></div>' +
+        '<div class="form-group"><label>Name (English)</label><input value="' + escHtml(r.nameEn || '') + '" onchange="updateRestaurant(' + idx + ',\'nameEn\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('副标题（中文）', 'Subtitle (CN)') + '</label><input value="' + escHtml(r.subtitle) + '" onchange="updateRestaurant(' + idx + ',\'subtitle\',this.value)"></div>' +
+        '<div class="form-group"><label>Subtitle (English)</label><input value="' + escHtml(r.subtitleEn || '') + '" onchange="updateRestaurant(' + idx + ',\'subtitleEn\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('分类（中文）', 'Category (CN)') + '</label><input value="' + escHtml(r.category) + '" onchange="updateRestaurant(' + idx + ',\'category\',this.value)"></div>' +
+        '<div class="form-group"><label>Category (English)</label><input value="' + escHtml(r.categoryEn || '') + '" onchange="updateRestaurant(' + idx + ',\'categoryEn\',this.value)"></div>' +
+      '</div>' +
+      '<div class="form-group"><label>' + L('餐厅介绍（中文）', 'Description (CN)') + '</label><textarea rows="3" onchange="updateRestaurant(' + idx + ',\'description\',this.value)">' + escHtml(r.description || '') + '</textarea></div>' +
+      '<div class="form-group"><label>Description (English)</label><textarea rows="3" onchange="updateRestaurant(' + idx + ',\'descriptionEn\',this.value)">' + escHtml(r.descriptionEn || '') + '</textarea></div>' +
+      '<div class="form-group"><label>' + L('亮点标签（中文）', 'Highlight (CN)') + '</label><input value="' + escHtml(r.highlight || '') + '" onchange="updateRestaurant(' + idx + ',\'highlight\',this.value)"></div>' +
+      '<div class="form-group"><label>Highlight (English)</label><input value="' + escHtml(r.highlightEn || '') + '" onchange="updateRestaurant(' + idx + ',\'highlightEn\',this.value)"></div>' +
+      '</div>';
+
+    // 地址与联系方式
+    html += '<div class="cms-section"><h5>📍 ' + L('地址与联系方式', 'Address & Contact') + '</h5>' +
+      '<div class="form-grid-2col">' +
+        '<div class="form-group"><label>' + L('地址（中文）', 'Address (CN)') + '</label><input value="' + escHtml((r.info || {}).address || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.address\',this.value)"></div>' +
+        '<div class="form-group"><label>Address (English)</label><input value="' + escHtml((r.info || {}).addressEn || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.addressEn\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('营业时间（中文）', 'Hours (CN)') + '</label><input value="' + escHtml((r.info || {}).hours || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.hours\',this.value)"></div>' +
+        '<div class="form-group"><label>Hours (English)</label><input value="' + escHtml((r.info || {}).hoursEn || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.hoursEn\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('电话1', 'Phone 1') + '</label><input value="' + escHtml((r.info || {}).phone || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.phone\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('电话2', 'Phone 2') + '</label><input value="' + escHtml((r.info || {}).phone2 || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.phone2\',this.value)"></div>' +
+        '<div class="form-group"><label>Latitude</label><input value="' + ((r.info || {}).lat || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.lat\',parseFloat(this.value)||0)"></div>' +
+        '<div class="form-group"><label>Longitude</label><input value="' + ((r.info || {}).lng || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'info.lng\',parseFloat(this.value)||0)"></div>' +
+      '</div></div>';
+
+    // 大众点评数据
+    html += '<div class="cms-section"><h5>⭐ ' + L('大众点评数据', 'Dianping Data') + '</h5>' +
+      '<div class="form-grid-2col">' +
+        '<div class="form-group"><label>' + L('评分', 'Rating') + '</label><input value="' + escHtml((r.dianping || {}).rating || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'dianping.rating\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('人均（中文）', 'Avg Price (CN)') + '</label><input value="' + escHtml((r.dianping || {}).avgPrice || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'dianping.avgPrice\',this.value)"></div>' +
+        '<div class="form-group"><label>Avg Price (English)</label><input value="' + escHtml((r.dianping || {}).avgPriceEn || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'dianping.avgPriceEn\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('排名描述（中文）', 'Rank (CN)') + '</label><input value="' + escHtml((r.dianping || {}).rank || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'dianping.rank\',this.value)"></div>' +
+        '<div class="form-group"><label>Rank (English)</label><input value="' + escHtml((r.dianping || {}).rankEn || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'dianping.rankEn\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('推荐菜数', '# Dishes') + '</label><input type="number" value="' + ((r.dianping || {}).dishes || '') + '" onchange="updateRestaurantDeepNum(' + idx + ',\'dianping.dishes\',this.value)" style="width:80px;"></div>' +
+      '</div></div>';
+
+    // 红包配置
+    html += '<div class="cms-section"><h5>🧧 ' + L('红包配置', 'Red Packet Config') + '</h5>' +
+      '<div class="form-grid-2col">' +
+        '<div class="form-group"><label>' + L('面额(¥)', 'Amount (¥)') + '</label><input type="number" value="' + ((r.redpacket || {}).amount || '') + '" onchange="updateRestaurantDeepNum(' + idx + ',\'redpacket.amount\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('最低消费(¥)', 'Min Spend (¥)') + '</label><input type="number" value="' + ((r.redpacket || {}).minSpend || '') + '" onchange="updateRestaurantDeepNum(' + idx + ',\'redpacket.minSpend\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('总数量', 'Total Qty') + '</label><input type="number" value="' + ((r.redpacket || {}).total || '') + '" onchange="updateRestaurantDeepNum(' + idx + ',\'redpacket.total\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('有效期(天)', 'Valid Days') + '</label><input type="number" value="' + ((r.redpacket || {}).validDays || '') + '" onchange="updateRestaurantDeepNum(' + idx + ',\'redpacket.validDays\',this.value)"></div>' +
+        '<div class="form-group"><label>' + L('描述（中文）', 'Desc (CN)') + '</label><input value="' + escHtml((r.redpacket || {}).desc || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'redpacket.desc\',this.value)"></div>' +
+        '<div class="form-group"><label>Desc (English)</label><input value="' + escHtml((r.redpacket || {}).descEn || '') + '" onchange="updateRestaurantDeep(' + idx + ',\'redpacket.descEn\',this.value)"></div>' +
+      '</div></div>';
+
     // 门头图
     html += '<div class="cms-section"><h5>' + L('门头图片', 'Storefront Image') + '</h5>' +
       '<div class="img-upload-row">' +
@@ -320,6 +371,20 @@ function addGalleryItem(idx) {
 }
 
 function updateRestaurant(idx, field, value) { editingRestaurants[idx][field] = value; }
+// 深层路径更新，如 updateRestaurantDeep(idx, 'info.address', value)
+function updateRestaurantDeep(idx, path, value) {
+  var keys = path.split('.');
+  var obj = editingRestaurants[idx];
+  for (var i = 0; i < keys.length - 1; i++) { obj = obj[keys[i]]; }
+  obj[keys[keys.length - 1]] = value;
+}
+// 数字型深层更新
+function updateRestaurantDeepNum(idx, path, value) {
+  var keys = path.split('.');
+  var obj = editingRestaurants[idx];
+  for (var i = 0; i < keys.length - 1; i++) { obj = obj[keys[i]]; }
+  obj[keys[keys.length - 1]] = parseInt(value) || 0;
+}
 function updateDish(idx, di, field, value) { editingRestaurants[idx].dishes[di][field] = value; }
 function updateCombo(idx, ci, field, value) { editingRestaurants[idx].combos[ci][field] = value; }
 
