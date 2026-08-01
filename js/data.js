@@ -140,10 +140,12 @@ let STATS = { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
 let claimedRedpackets = [];
 
 // API 调用封装
-async function apiFetch(path, options) {
+async function apiFetch(path, options, token) {
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
     const res = await fetch(API_BASE + path, {
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       ...options,
     });
     return await res.json();
@@ -230,12 +232,12 @@ function renderRedpacketQRImg(rp, imgElement) {
   imgElement.style.display = 'block';
 }
 
-// 核销红包（异步）
-async function useRedpacket(id, pin) {
+// 核销红包（异步，管理员需传 token）
+async function useRedpacket(id, pin, token) {
   const res = await apiFetch('/api/verify', {
     method: 'POST',
     body: JSON.stringify({ id, pin }),
-  });
+  }, token);
   if (res.success) {
     // 更新本地缓存
     const idx = claimedRedpackets.findIndex(r => r.id.toUpperCase() === id.toUpperCase());
@@ -317,8 +319,8 @@ function getVerifyShareUrl(rp) {
 }
 
 // ==================== 清除数据 ====================
-async function clearAllData() {
-  const res = await apiFetch('/api/clear', { method: 'POST' });
+async function clearAllData(token) {
+  const res = await apiFetch('/api/clear', { method: 'POST' }, token);
   if (res.success) {
     STATS = { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
     claimedRedpackets = [];

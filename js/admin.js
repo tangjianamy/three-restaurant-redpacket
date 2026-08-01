@@ -3,9 +3,27 @@
 let currentTab = 'dashboard';
 let editingRestaurants = [];
 let html5QrScanner = null;  // 扫码器实例
+let adminToken = null;      // 管理员登录 Token
 
-// 初始化
+// ===== 初始化 =====
 document.addEventListener('DOMContentLoaded', async () => {
+  // 检查登录状态
+  adminToken = localStorage.getItem('s3_admin_token');
+  if (adminToken) {
+    const valid = await checkAuth();
+    if (!valid) {
+      adminToken = null;
+      localStorage.removeItem('s3_admin_token');
+    }
+  }
+
+  if (!adminToken) {
+    showLogin();
+    return;
+  }
+
+  showMain();
+  updateSidebarUser();
   await loadStats();
   editingRestaurants = JSON.parse(JSON.stringify(RESTAURANTS));
   switchTab('dashboard');
@@ -20,6 +38,93 @@ function adminToast(msg, type = '') {
   setTimeout(() => { toast.style.display = 'none'; }, 2500);
 }
 
+// ===== 管理员登录/鉴权 =====
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.querySelector('.admin-layout').style.display = 'none';
+  document.getElementById('mobileTopbar').style.display = 'none';
+  document.getElementById('mobileBottomNav').style.display = 'none';
+}
+
+function showMain() {
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.querySelector('.admin-layout').style.display = 'flex';
+  document.getElementById('mobileTopbar').style.display = '';
+  document.getElementById('mobileBottomNav').style.display = '';
+}
+
+function updateSidebarUser() {
+  const el = document.getElementById('sidebarUser');
+  if (el) el.textContent = '👤 admin';
+}
+
+async function checkAuth() {
+  try {
+    const res = await fetch(API_BASE + '/api/admin/check', {
+      headers: { 'Authorization': 'Bearer ' + adminToken }
+    });
+    const data = await res.json();
+    return data.valid;
+  } catch (e) { return false; }
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value.trim();
+  const errorEl = document.getElementById('loginError');
+
+  if (!username || !password) {
+    errorEl.textContent = '请输入账号和密码';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + '/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      adminToken = data.token;
+      localStorage.setItem('s3_admin_token', adminToken);
+      errorEl.style.display = 'none';
+      showMain();
+      updateSidebarUser();
+      await loadStats();
+      editingRestaurants = JSON.parse(JSON.stringify(RESTAURANTS));
+      switchTab('dashboard');
+    } else {
+      errorEl.textContent = data.message || '登录失败';
+      errorEl.style.display = 'block';
+    }
+  } catch (e) {
+    errorEl.textContent = '网络错误，请重试';
+    errorEl.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  if (!confirm('确定退出登录吗？')) return;
+  adminToken = null;
+  localStorage.removeItem('s3_admin_token');
+  stopScanner();
+  document.querySelector('.admin-layout').style.display = 'none';
+  document.getElementById('mobileTopbar').style.display = 'none';
+  document.getElementById('mobileBottomNav').style.display = 'none';
+  showLogin();
+  // 关闭侧边栏（移动端）
+  document.getElementById('sidebarOverlay').classList.remove('active');
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+// ===== 获取带鉴权的 fetch headers =====
+function authHeaders() {
+  return adminToken ? { 'Authorization': 'Bearer ' + adminToken } : {};
+}
+
 // ===== 切换标签页 =====
 function switchTab(tab) {
   currentTab = tab;
@@ -27,9 +132,21 @@ function switchTab(tab) {
   // 关闭之前可能打开的扫码器
   stopScanner();
 
+  // 侧边栏高亮
   document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
   const link = document.querySelector(`.sidebar-nav a[onclick*="${tab}"]`);
   if (link) link.classList.add('active');
+
+  // 底部导航高亮
+  document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(a => a.classList.remove('active'));
+  const navItem = document.querySelector(`.mobile-bottom-nav [data-tab="${tab}"]`);
+  if (navItem) navItem.classList.add('active');
+
+  // 移动端关闭侧边栏
+  if (window.innerWidth <= 768) {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+  }
 
   const main = document.getElementById('mainContent');
   switch (tab) {
@@ -40,6 +157,14 @@ function switchTab(tab) {
     case 'scan': renderScanPage(main); break;
     case 'qrcode': renderQRCode(main); break;
   }
+}
+
+// ===== 移动端侧边栏开关 =====
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
 }
 
 // ===== 停止扫码器 =====
@@ -455,7 +580,7 @@ function cacheRedpacketData(data) {
 async function doScanVerify(id) {
   if (!confirm('确定核销此红包吗？核销后不可撤销。')) return;
 
-  await useRedpacket(id);
+  await useRedpacket(id, null, adminToken);
 
   const usedCodes = JSON.parse(localStorage.getItem('s3_admin_verified') || '[]');
   usedCodes.push(id);
@@ -648,7 +773,7 @@ async function renderRecords(main) {
 
 async function markAsUsed(id) {
   if (confirm('确定核销此红包吗？')) {
-    await useRedpacket(id);
+    await useRedpacket(id, null, adminToken);
     const usedCodes = JSON.parse(localStorage.getItem('s3_admin_verified') || '[]');
     if (!usedCodes.includes(id)) { usedCodes.push(id); }
     localStorage.setItem('s3_admin_verified', JSON.stringify(usedCodes));
@@ -716,7 +841,7 @@ async function clearAllDataAdmin() {
   
   if (!confirm('再次确认：真的要清除所有数据吗？')) return;
 
-  await clearAllData();
+  await clearAllData(adminToken);
   adminToast('✅ 所有历史数据已清除', 'toast-success');
   
   // 刷新当前页面

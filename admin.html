@@ -4,9 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台 · 三店联动营销系统</title>
-<link rel="stylesheet" href="css/admin.css?v=20260801">
+<link rel="stylesheet" href="css/admin.css?v=20260801b">
 </head>
 <body>
+
+<!-- ===== 登录遮罩 ===== -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">🧧</div>
+    <h2>三店联动 · 管理后台</h2>
+    <p>请使用管理员账号登录</p>
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label>账号</label>
+        <input type="text" id="loginUser" placeholder="请输入管理员账号" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="loginPass" placeholder="请输入密码" autocomplete="current-password" required>
+      </div>
+      <div class="login-error" id="loginError" style="display:none;"></div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">🔐 登录</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 移动端顶部栏 ===== -->
+<div class="mobile-topbar" id="mobileTopbar">
+  <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="菜单">☰</button>
+  <span class="mobile-title">🧧 三店联动管理</span>
+  <button class="logout-btn-mobile" onclick="doLogout()" title="退出登录">🚪</button>
+</div>
+
+<!-- ===== 侧边栏遮罩（移动端） ===== -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <div class="admin-layout">
   <!-- 侧边栏 -->
@@ -36,8 +67,10 @@
       </a>
     </nav>
     <div class="sidebar-footer">
-      <div style="margin-bottom:8px;">v2.1 · 分享核销</div>
-      <a href="#" onclick="clearAllDataAdmin()" style="color:#E74C3C;font-size:12px;text-decoration:none;">🗑️ 清除所有数据</a>
+      <div style="margin-bottom:8px;">v2.2 · 手机端适配</div>
+      <div style="margin-bottom:8px;"><span id="sidebarUser"></span></div>
+      <a href="#" onclick="doLogout()" style="color:#E74C3C;font-size:12px;text-decoration:none;">🚪 退出登录</a>
+      <a href="#" onclick="clearAllDataAdmin()" style="color:#E74C3C;font-size:12px;text-decoration:none;margin-left:12px;">🗑️ 清除数据</a>
     </div>
   </aside>
 
@@ -50,9 +83,28 @@
 <!-- Toast -->
 <div class="toast" id="toast" style="display:none;"></div>
 
+<!-- ===== 移动端底部导航 ===== -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+  <a href="#" onclick="switchTab('dashboard')" class="nav-item active" data-tab="dashboard">
+    <span class="nav-icon">📊</span><span>看板</span>
+  </a>
+  <a href="#" onclick="switchTab('scan')" class="nav-item" data-tab="scan">
+    <span class="nav-icon">📱</span><span>扫码</span>
+  </a>
+  <a href="#" onclick="switchTab('records')" class="nav-item" data-tab="records">
+    <span class="nav-icon">📋</span><span>记录</span>
+  </a>
+  <a href="#" onclick="switchTab('qrcode')" class="nav-item" data-tab="qrcode">
+    <span class="nav-icon">🔗</span><span>二维码</span>
+  </a>
+  <a href="#" onclick="switchTab('restaurant')" class="nav-item" data-tab="restaurant">
+    <span class="nav-icon">⚙️</span><span>设置</span>
+  </a>
+</nav>
+
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="js/qrcode-lib.js?v=20260801"></script>
-<script src="js/data.js?v=20260801"></script>
-<script src="js/admin.js?v=20260801"></script>
+<script src="js/qrcode-lib.js?v=20260801b"></script>
+<script src="js/data.js?v=20260801b"></script>
+<script src="js/admin.js?v=20260801b"></script>
 </body>
 </html>

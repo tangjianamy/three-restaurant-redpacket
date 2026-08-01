@@ -12,8 +12,13 @@ const url = require('url');
 // ====== 配置区 ======
 const WECHAT_APPID = process.env.WECHAT_APPID || '';
 const WECHAT_SECRET = process.env.WECHAT_SECRET || '';
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
+
+// 管理员 Token 管理（内存）
+const adminTokens = new Map(); // token -> { username, createdAt }
 
 // 确保数据目录存在
 if (!fs.existsSync(DATA_DIR)) {
@@ -203,6 +208,12 @@ async function handleAPI(req, res, pathname, query) {
 
     // ====== POST /api/verify ======
     if (req.method === 'POST' && pathname === '/api/verify') {
+      // 管理员鉴权
+      const auth = req.headers['authorization'] || '';
+      const token = auth.replace('Bearer ', '');
+      if (!adminTokens.has(token)) {
+        return sendJSON(res, { success: false, message: '需要管理员登录' }, 401);
+      }
       const body = await parseBody(req);
       const { id, pin } = body || {};
       if (!id) return sendJSON(res, { success: false, message: '缺少红包ID' }, 400);
@@ -231,11 +242,39 @@ async function handleAPI(req, res, pathname, query) {
 
     // ====== POST /api/clear ======
     if (req.method === 'POST' && pathname === '/api/clear') {
+      const auth = req.headers['authorization'] || '';
+      const token = auth.replace('Bearer ', '');
+      if (!adminTokens.has(token)) {
+        return sendJSON(res, { success: false, message: '需要管理员登录' }, 401);
+      }
       stats = { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
       claimedRedpackets = [];
       await writeJSON(STATS_FILE, stats);
       await writeJSON(CLAIMED_FILE, claimedRedpackets);
       return sendJSON(res, { success: true, message: '数据已清除' });
+    }
+
+    // ====== POST /api/admin/login ======
+    if (req.method === 'POST' && pathname === '/api/admin/login') {
+      const body = await parseBody(req);
+      const { username, password } = body || {};
+      if (username !== ADMIN_USER || password !== ADMIN_PASS) {
+        return sendJSON(res, { success: false, message: '账号或密码错误' }, 401);
+      }
+      const token = 'tk_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      adminTokens.set(token, { username, createdAt: Date.now() });
+      // 清理过期 token（24小时）
+      const expiry = Date.now() - 24 * 60 * 60 * 1000;
+      for (const [k, v] of adminTokens) { if (v.createdAt < expiry) adminTokens.delete(k); }
+      return sendJSON(res, { success: true, token, username, message: '登录成功' });
+    }
+
+    // ====== GET /api/admin/check ======
+    if (req.method === 'GET' && pathname === '/api/admin/check') {
+      const auth = req.headers['authorization'] || '';
+      const token = auth.replace('Bearer ', '');
+      const valid = adminTokens.has(token);
+      return sendJSON(res, { success: valid, valid, message: valid ? '已登录' : '未登录' });
     }
 
     // ====== GET /api/health ======

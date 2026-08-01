@@ -24,7 +24,7 @@ body {
 
 /* 侧边栏布局 */
 .admin-layout {
-  display: flex;
+  display: none;  /* 默认隐藏，登录后显示 */
   min-height: 100vh;
 }
 
@@ -562,4 +562,386 @@ body {
 
 #qrReader video {
   border-radius: 8px;
+}
+
+/* ===== 登录遮罩 ===== */
+.login-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #1A1A2E, #2C3E50);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 16px;
+  padding: 36px 28px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.login-logo { font-size: 48px; margin-bottom: 8px; }
+
+.login-card h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+  color: #1A1A2E;
+}
+
+.login-card > p {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.login-card .form-group {
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.login-card .form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.login-card .form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #E8E8E8;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.login-card .form-group input:focus {
+  border-color: var(--admin-primary);
+}
+
+.login-error {
+  background: #FDEDEC;
+  color: #E74C3C;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.login-card .btn-lg {
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
+}
+
+/* ===== 移动端顶部栏 ===== */
+.mobile-topbar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #1A1A2E;
+  color: white;
+  z-index: 900;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+}
+
+.hamburger-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 6px 8px;
+  line-height: 1;
+}
+
+.mobile-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.logout-btn-mobile {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+/* ===== 侧边栏遮罩（移动端） ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 950;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+}
+
+/* ===== 移动端底部导航 ===== */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: white;
+  border-top: 1px solid #E8E8E8;
+  z-index: 900;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 4px;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+}
+
+.mobile-bottom-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  color: #999;
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 50px;
+}
+
+.mobile-bottom-nav .nav-item .nav-icon {
+  font-size: 20px;
+}
+
+.mobile-bottom-nav .nav-item.active {
+  color: var(--admin-primary);
+  font-weight: 700;
+}
+
+/* ===== 响应式：手机端 ===== */
+@media (max-width: 768px) {
+  /* 顶部栏 */
+  .mobile-topbar { display: flex; }
+  .sidebar-overlay { display: block; }
+
+  /* 布局调整 */
+  .admin-layout {
+    flex-direction: column;
+    padding-top: 50px;
+    padding-bottom: 70px;
+  }
+
+  /* 侧边栏 → 滑出抽屉 */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: 960;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    padding-top: 60px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-logo {
+    padding-top: 10px;
+  }
+
+  /* 主内容区 */
+  .main-content {
+    padding: 14px 12px;
+    width: 100%;
+  }
+
+  .main-header h1 { font-size: 20px; }
+  .main-header p { font-size: 12px; }
+
+  /* 统计卡片：2列 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    border-radius: 10px;
+  }
+
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 11px; }
+
+  /* 表格横向滚动 */
+  .data-table {
+    min-width: 600px;
+  }
+
+  .data-table th, .data-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .card-body {
+    overflow-x: auto;
+    padding: 14px;
+  }
+
+  .card-header {
+    padding: 12px 14px;
+  }
+
+  .card-header h3 { font-size: 14px; }
+
+  /* 表单：单列 */
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .form-row.three {
+    grid-template-columns: 1fr;
+  }
+
+  .setting-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .setting-row.three-col {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .form-group label { font-size: 13px; }
+
+  /* 按钮加大 */
+  .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+  /* 扫码页面：全宽 */
+  #qrScannerContainer {
+    max-width: 100% !important;
+  }
+
+  #qrReader {
+    max-width: 100% !important;
+  }
+
+  .verify-input {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+
+  /* 红包设置 */
+  .restaurant-editor {
+    padding: 14px;
+  }
+
+  .editor-header h4 { font-size: 14px; }
+
+  /* Toast */
+  .toast {
+    top: 60px;
+    right: 10px;
+    left: 10px;
+    text-align: center;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  /* 餐厅管理子表 */
+  .sub-table th, .sub-table td {
+    padding: 6px 6px;
+    font-size: 11px;
+  }
+
+  .sub-table td input {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+
+  /* 快速核销行 */
+  .quick-verify-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quick-verify-row .btn-lg {
+    width: 100%;
+  }
+
+  /* 核销结果 */
+  .verify-result {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .verify-rp-amount {
+    font-size: 28px;
+    min-width: auto;
+  }
+
+  .vrc-amount { font-size: 32px; }
+
+  /* 活动概况3列改2列 */
+  .content-card .card-body > div[style*="grid-template-columns:1fr 1fr 1fr"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* 底部导航 */
+  .mobile-bottom-nav { display: flex; }
+
+  /* 侧边栏页脚 */
+  .sidebar-footer { padding-bottom: 80px; }
+
+  /* 二维码展示 */
+  .qr-code {
+    width: 160px;
+    height: 160px;
+  }
+
+  .qr-url { font-size: 11px; }
 }
