@@ -74,7 +74,7 @@ function writeJSON(filePath, data) {
 
 // ====== Supabase REST API 辅助函数 ======
 
-function supabaseRequest(method, table, params, body) {
+function supabaseRequest(method, table, params, body, opts) {
   return new Promise((resolve, reject) => {
     const fullUrl = new URL(SUPABASE_URL + '/rest/v1/' + table);
     if (params) {
@@ -93,7 +93,11 @@ function supabaseRequest(method, table, params, body) {
     };
 
     if (body && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
-      headers['Prefer'] = 'return=minimal';
+      if (opts && opts.upsert) {
+        headers['Prefer'] = 'return=minimal,resolution=merge-duplicates';
+      } else {
+        headers['Prefer'] = 'return=minimal';
+      }
     }
 
     const options = { method, headers };
@@ -244,7 +248,11 @@ const db = {
     if (USE_SUPABASE) {
       try {
         const rows = await supabaseRequest('GET', 'stats', { id: 'eq.1' });
-        return dbToStats(rows && rows[0]);
+        if (rows && rows.length > 0) return dbToStats(rows[0]);
+        // 表存在但没有 id=1 记录，尝试插入
+        try {
+          await supabaseRequest('POST', 'stats', null, { id: 1, scan_count: 0, redpacket_claimed: 0, redpacket_used: 0 });
+        } catch (e2) { console.error('Init stats row failed:', e2.message); }
       } catch (e) { console.error('Load stats from Supabase failed:', e.message); }
       return { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
     }
@@ -253,7 +261,11 @@ const db = {
 
   async saveStats(s) {
     if (USE_SUPABASE) {
-      await supabaseRequest('PATCH', 'stats', { id: 'eq.1' }, statsToDb(s));
+      try {
+        const dbData = statsToDb(s);
+        dbData.id = 1;
+        await supabaseRequest('POST', 'stats', null, dbData, { upsert: true });
+      } catch (e) { console.error('Save stats to Supabase failed (non-fatal):', e.message); }
     } else {
       await writeJSON(STATS_FILE, s);
     }
@@ -325,7 +337,7 @@ const db = {
 
   async saveRestaurant(id, data) {
     if (USE_SUPABASE) {
-      await supabaseRequest('PATCH', 'restaurants', { id: 'eq.' + id }, { data: data });
+      await supabaseRequest('POST', 'restaurants', null, { id, data }, { upsert: true });
     } else {
       await writeJSON(RESTAURANTS_FILE, restaurants);
     }
