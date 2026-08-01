@@ -1,6 +1,6 @@
-// ==================== 三店联动 · Node.js 服务端 v3.0 ====================
+// ==================== 三店联动 · Node.js 服务端 v4.0 ====================
 // 静态文件服务 + REST API + 操作日志 + 内容管理 + 图片上传
-// 数据存储在 data/ 目录下的 JSON 文件中，所有设备共享同一份数据
+// 数据存储：Supabase PostgreSQL (持久化) + JSON 文件回退 (本地开发)
 // 启动: node server.js
 
 const http = require('http');
@@ -18,21 +18,26 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
+// Supabase 配置
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
+
 // 管理员 Token 管理（内存）
-const adminTokens = new Map(); // token -> { username, createdAt }
+const adminTokens = new Map();
 
 // 确保数据目录存在
 [DATA_DIR, UPLOAD_DIR].forEach(d => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
 
-// ====== 数据文件路径 ======
+// ====== JSON 文件路径 (回退用) ======
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
 const CLAIMED_FILE = path.join(DATA_DIR, 'claimed.json');
 const RESTAURANTS_FILE = path.join(DATA_DIR, 'restaurants.json');
 const LOGS_FILE = path.join(DATA_DIR, 'logs.json');
 
-// ====== 文件锁 ======
+// ====== 文件锁 (JSON 回退模式用) ======
 let writeLock = false;
 const writeQueue = [];
 
@@ -67,13 +72,309 @@ function writeJSON(filePath, data) {
   });
 }
 
-// ====== 初始化数据 ======
-let stats = readJSON(STATS_FILE, { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 });
-let claimedRedpackets = readJSON(CLAIMED_FILE, []);
-let savedRestaurants = readJSON(RESTAURANTS_FILE, null);
-let logs = readJSON(LOGS_FILE, []);
+// ====== Supabase REST API 辅助函数 ======
 
-// 默认餐厅配置
+function supabaseRequest(method, table, params, body) {
+  return new Promise((resolve, reject) => {
+    const fullUrl = new URL(SUPABASE_URL + '/rest/v1/' + table);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        fullUrl.searchParams.set(k, v);
+      }
+    }
+
+    const isHttp = SUPABASE_URL.startsWith('http://');
+    const mod = isHttp ? http : https;
+
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+    };
+
+    if (body && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
+      headers['Prefer'] = 'return=minimal';
+    }
+
+    const options = { method, headers };
+
+    const req = mod.request(fullUrl, options, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          if (data) {
+            try { resolve(JSON.parse(data)); }
+            catch (e) { resolve(data); }
+          } else {
+            resolve(null);
+          }
+        } else {
+          console.error('Supabase ' + method + ' ' + table + ' failed:', res.statusCode, data);
+          reject(new Error('Supabase error: ' + res.statusCode));
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      console.error('Supabase request error:', e.message);
+      reject(e);
+    });
+
+    if (body) req.write(JSON.stringify(body));
+    req.end();
+  });
+}
+
+function supabaseUploadFile(bucket, filePath, buffer, contentType) {
+  return new Promise((resolve, reject) => {
+    const uploadUrl = SUPABASE_URL + '/storage/v1/object/' + bucket + '/' + filePath;
+    const isHttp = SUPABASE_URL.startsWith('http://');
+    const mod = isHttp ? http : https;
+
+    const req = mod.request(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': contentType || 'application/octet-stream',
+        'Content-Length': buffer.length,
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + filePath);
+        } else {
+          console.error('Supabase Storage upload failed:', res.statusCode, data);
+          reject(new Error('Storage upload failed: ' + res.statusCode));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(buffer);
+    req.end();
+  });
+}
+
+// ====== 数据转换 (snake_case <-> camelCase) ======
+
+function dbToStats(row) {
+  if (!row) return { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
+  return {
+    scanCount: row.scan_count || 0,
+    redpacketClaimed: row.redpacket_claimed || 0,
+    redpacketUsed: row.redpacket_used || 0
+  };
+}
+
+function statsToDb(s) {
+  return {
+    scan_count: s.scanCount,
+    redpacket_claimed: s.redpacketClaimed,
+    redpacket_used: s.redpacketUsed
+  };
+}
+
+function dbToRedpacket(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    pin: row.pin,
+    phone: row.phone,
+    phoneMasked: row.phone_masked,
+    restaurantId: row.restaurant_id,
+    restaurantName: row.restaurant_name,
+    restaurantColor: row.restaurant_color,
+    amount: row.amount,
+    minSpend: row.min_spend,
+    claimedAt: row.claimed_at,
+    expireAt: row.expire_at,
+    used: row.used,
+    usedAt: row.used_at
+  };
+}
+
+function redpacketToDb(rp) {
+  return {
+    id: rp.id,
+    pin: rp.pin,
+    phone: rp.phone,
+    phone_masked: rp.phoneMasked,
+    restaurant_id: rp.restaurantId,
+    restaurant_name: rp.restaurantName,
+    restaurant_color: rp.restaurantColor,
+    amount: rp.amount,
+    min_spend: rp.minSpend,
+    claimed_at: rp.claimedAt,
+    expire_at: rp.expireAt,
+    used: rp.used || false,
+    used_at: rp.usedAt || null
+  };
+}
+
+function dbToLog(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    timestamp: row.created_at,
+    action: row.action,
+    details: row.details,
+    admin: row.admin
+  };
+}
+
+function logToDb(entry) {
+  return {
+    id: entry.id,
+    created_at: entry.timestamp,
+    action: entry.action,
+    details: entry.details,
+    admin: entry.admin
+  };
+}
+
+// ====== 数据持久化抽象层 ======
+
+const db = {
+  // --- Stats ---
+  async loadStats() {
+    if (USE_SUPABASE) {
+      try {
+        const rows = await supabaseRequest('GET', 'stats', { id: 'eq.1' });
+        return dbToStats(rows && rows[0]);
+      } catch (e) { console.error('Load stats from Supabase failed:', e.message); }
+      return { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
+    }
+    return readJSON(STATS_FILE, { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 });
+  },
+
+  async saveStats(s) {
+    if (USE_SUPABASE) {
+      await supabaseRequest('PATCH', 'stats', { id: 'eq.1' }, statsToDb(s));
+    } else {
+      await writeJSON(STATS_FILE, s);
+    }
+  },
+
+  // --- Redpackets ---
+  async loadRedpackets() {
+    if (USE_SUPABASE) {
+      try {
+        const rows = await supabaseRequest('GET', 'redpackets', {
+          order: 'claimed_at.desc'
+        });
+        return (rows || []).map(dbToRedpacket);
+      } catch (e) { console.error('Load redpackets from Supabase failed:', e.message); }
+      return [];
+    }
+    return readJSON(CLAIMED_FILE, []);
+  },
+
+  async insertRedpacket(rp) {
+    if (USE_SUPABASE) {
+      await supabaseRequest('POST', 'redpackets', null, redpacketToDb(rp));
+    } else {
+      await writeJSON(CLAIMED_FILE, claimedRedpackets);
+    }
+  },
+
+  async updateRedpacket(id, updates) {
+    if (USE_SUPABASE) {
+      const dbUpdates = {};
+      if ('used' in updates) dbUpdates.used = updates.used;
+      if ('usedAt' in updates) dbUpdates.used_at = updates.usedAt;
+      await supabaseRequest('PATCH', 'redpackets', { id: 'eq.' + id }, dbUpdates);
+    } else {
+      await writeJSON(CLAIMED_FILE, claimedRedpackets);
+    }
+  },
+
+  async clearRedpackets() {
+    if (USE_SUPABASE) {
+      await supabaseRequest('DELETE', 'redpackets', null, null);
+    } else {
+      await writeJSON(CLAIMED_FILE, []);
+    }
+  },
+
+  // --- Restaurants ---
+  async loadRestaurants() {
+    if (USE_SUPABASE) {
+      try {
+        const rows = await supabaseRequest('GET', 'restaurants', {
+          order: 'id.asc'
+        });
+        if (rows && rows.length > 0) {
+          return rows.map(r => r.data);
+        }
+        // 首次运行：插入默认数据
+        const defaults = JSON.parse(JSON.stringify(DEFAULT_RESTAURANTS));
+        for (const r of defaults) {
+          await supabaseRequest('POST', 'restaurants', null, { id: r.id, data: r });
+        }
+        return defaults;
+      } catch (e) { console.error('Load restaurants from Supabase failed:', e.message); }
+      return JSON.parse(JSON.stringify(DEFAULT_RESTAURANTS));
+    }
+    const saved = readJSON(RESTAURANTS_FILE, null);
+    return saved || JSON.parse(JSON.stringify(DEFAULT_RESTAURANTS));
+  },
+
+  async saveRestaurant(id, data) {
+    if (USE_SUPABASE) {
+      await supabaseRequest('PATCH', 'restaurants', { id: 'eq.' + id }, { data: data });
+    } else {
+      await writeJSON(RESTAURANTS_FILE, restaurants);
+    }
+  },
+
+  // --- Logs ---
+  async loadLogs() {
+    if (USE_SUPABASE) {
+      try {
+        const rows = await supabaseRequest('GET', 'logs', {
+          order: 'created_at.desc',
+          limit: '1000'
+        });
+        return (rows || []).map(dbToLog);
+      } catch (e) { console.error('Load logs from Supabase failed:', e.message); }
+      return [];
+    }
+    return readJSON(LOGS_FILE, []);
+  },
+
+  async insertLog(entry) {
+    if (USE_SUPABASE) {
+      await supabaseRequest('POST', 'logs', null, logToDb(entry));
+    } else {
+      await writeJSON(LOGS_FILE, logs);
+    }
+  },
+
+  async clearLogs() {
+    if (USE_SUPABASE) {
+      await supabaseRequest('DELETE', 'logs', null, null);
+    } else {
+      await writeJSON(LOGS_FILE, []);
+    }
+  },
+
+  // --- Image Upload ---
+  async uploadImage(safeName, buffer, contentType) {
+    if (USE_SUPABASE) {
+      return await supabaseUploadFile('uploads', safeName, buffer, contentType);
+    } else {
+      const filePath = path.join(UPLOAD_DIR, safeName);
+      fs.writeFileSync(filePath, buffer);
+      return '/uploads/' + safeName;
+    }
+  }
+};
+
+// ====== 默认餐厅配置 ======
 const DEFAULT_RESTAURANTS = [
   {
     id: 1,
@@ -187,10 +488,13 @@ const DEFAULT_RESTAURANTS = [
   }
 ];
 
-// 加载持久化的餐厅数据，否则用默认
-let restaurants = savedRestaurants || JSON.parse(JSON.stringify(DEFAULT_RESTAURANTS));
+// ====== 内存数据 (启动时从 Supabase/JSON 加载) ======
+let stats = { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
+let claimedRedpackets = [];
+let restaurants = JSON.parse(JSON.stringify(DEFAULT_RESTAURANTS));
+let logs = [];
 
-// 餐厅红包配置（用于领红包API，与 restaurants 同步）
+// 餐厅红包配置
 function getRestaurantConfigs() {
   const configs = {};
   restaurants.forEach(r => {
@@ -202,16 +506,16 @@ function getRestaurantConfigs() {
 // ====== 操作日志 ======
 function addLog(action, details, admin) {
   const entry = {
-    id: 'LOG' + Date.now().toString(36).toUpperCase(),
+    id: 'LOG' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 4).toUpperCase(),
     timestamp: new Date().toISOString(),
     action,
     details,
     admin: admin || 'system'
   };
   logs.unshift(entry);
-  // 只保留最近1000条
   if (logs.length > 1000) logs = logs.slice(0, 1000);
-  writeJSON(LOGS_FILE, logs).catch(e => console.error('日志写入失败:', e));
+  // 异步写入，不阻塞请求
+  db.insertLog(entry).catch(e => console.error('日志写入失败:', e.message));
 }
 
 // ====== MIME 类型 ======
@@ -267,6 +571,13 @@ function requireAuth(req, res) {
   return true;
 }
 
+function getAdminFromToken(req) {
+  const auth = req.headers['authorization'] || '';
+  const token = auth.replace('Bearer ', '');
+  const info = adminTokens.get(token);
+  return info ? info.username : 'unknown';
+}
+
 // ====== API 处理 ======
 async function handleAPI(req, res, pathname, query) {
   if (req.method === 'OPTIONS') {
@@ -283,7 +594,7 @@ async function handleAPI(req, res, pathname, query) {
     // ====== POST /api/scan ======
     if (req.method === 'POST' && pathname === '/api/scan') {
       stats.scanCount++;
-      await writeJSON(STATS_FILE, stats);
+      await db.saveStats(stats);
       addLog('扫码', '用户扫码进入活动页面');
       return sendJSON(res, { success: true, data: stats });
     }
@@ -293,7 +604,7 @@ async function handleAPI(req, res, pathname, query) {
       return sendJSON(res, { success: true, data: stats });
     }
 
-    // ====== GET /api/restaurants (公开，获取餐厅数据) ======
+    // ====== GET /api/restaurants ======
     if (req.method === 'GET' && pathname === '/api/restaurants') {
       return sendJSON(res, { success: true, data: restaurants });
     }
@@ -337,9 +648,9 @@ async function handleAPI(req, res, pathname, query) {
 
       claimedRedpackets.push(redpacket);
       stats.redpacketClaimed++;
-      await writeJSON(CLAIMED_FILE, claimedRedpackets);
-      await writeJSON(STATS_FILE, stats);
-      addLog('领取红包', `${cfg.name} | ¥${cfg.amount} | ${redpacket.phoneMasked}`);
+      await db.insertRedpacket(redpacket);
+      await db.saveStats(stats);
+      addLog('领取红包', cfg.name + ' | ¥' + cfg.amount + ' | ' + redpacket.phoneMasked);
 
       return sendJSON(res, { success: true, redpacket });
     }
@@ -380,9 +691,9 @@ async function handleAPI(req, res, pathname, query) {
       rp.used = true;
       rp.usedAt = new Date().toISOString();
       stats.redpacketUsed++;
-      await writeJSON(CLAIMED_FILE, claimedRedpackets);
-      await writeJSON(STATS_FILE, stats);
-      addLog('核销红包', `${rp.restaurantName} | ¥${rp.amount} | ${rp.phoneMasked} | PIN: ${rp.pin}`, getAdminFromToken(req));
+      await db.updateRedpacket(rp.id, { used: true, usedAt: rp.usedAt });
+      await db.saveStats(stats);
+      addLog('核销红包', rp.restaurantName + ' | ¥' + rp.amount + ' | ' + rp.phoneMasked + ' | PIN: ' + rp.pin, getAdminFromToken(req));
 
       return sendJSON(res, { success: true, message: 'Verified', messageZh: '核销成功', redpacket: rp });
     }
@@ -394,9 +705,9 @@ async function handleAPI(req, res, pathname, query) {
       const oldCount = claimedRedpackets.length;
       stats = { scanCount: 0, redpacketClaimed: 0, redpacketUsed: 0 };
       claimedRedpackets = [];
-      await writeJSON(STATS_FILE, stats);
-      await writeJSON(CLAIMED_FILE, claimedRedpackets);
-      addLog('清除数据', `清除扫码${oldStats.scanCount}次 | 红包${oldCount}个`, getAdminFromToken(req));
+      await db.clearRedpackets();
+      await db.saveStats(stats);
+      addLog('清除数据', '清除扫码' + oldStats.scanCount + '次 | 红包' + oldCount + '个', getAdminFromToken(req));
       return sendJSON(res, { success: true, message: 'Data cleared', messageZh: '数据已清除', cleared: { scans: oldStats.scanCount, redpackets: oldCount } });
     }
 
@@ -405,15 +716,14 @@ async function handleAPI(req, res, pathname, query) {
       const body = await parseBody(req);
       const { username, password } = body || {};
       if (username !== ADMIN_USER || password !== ADMIN_PASS) {
-        addLog('登录失败', `账号: ${username || '(空)'} | IP: ${getClientIP(req)}`);
+        addLog('登录失败', '账号: ' + (username || '(空)') + ' | IP: ' + getClientIP(req));
         return sendJSON(res, { success: false, message: 'Invalid credentials', messageZh: '账号或密码错误' }, 401);
       }
       const token = 'tk_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
       adminTokens.set(token, { username, createdAt: Date.now() });
-      // 清理过期 token（24小时）
       const expiry = Date.now() - 24 * 60 * 60 * 1000;
       for (const [k, v] of adminTokens) { if (v.createdAt < expiry) adminTokens.delete(k); }
-      addLog('登录成功', `账号: ${username} | IP: ${getClientIP(req)}`);
+      addLog('登录成功', '账号: ' + username + ' | IP: ' + getClientIP(req));
       return sendJSON(res, { success: true, token, username, message: 'Login successful', messageZh: '登录成功' });
     }
 
@@ -429,7 +739,6 @@ async function handleAPI(req, res, pathname, query) {
     if (req.method === 'POST' && pathname === '/api/admin/upload') {
       if (!requireAuth(req, res)) return;
 
-      // 解析 JSON body with base64 image
       let body = '';
       req.on('data', chunk => { body += chunk; });
       await new Promise(resolve => req.on('end', resolve));
@@ -444,38 +753,34 @@ async function handleAPI(req, res, pathname, query) {
         return sendJSON(res, { success: false, message: 'Missing filename or data', messageZh: '缺少文件名或图片数据' }, 400);
       }
 
-      // 安全检查：只允许图片格式
       const ext = path.extname(filename).toLowerCase();
       if (!['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(ext)) {
         return sendJSON(res, { success: false, message: 'Invalid file type', messageZh: '仅支持 PNG/JPG/GIF/WebP 格式' }, 400);
       }
 
-      // 移除 base64 前缀 (data:image/png;base64,)
       const base64Str = base64Data.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Str, 'base64');
 
-      // 限制文件大小 5MB
       if (buffer.length > 5 * 1024 * 1024) {
         return sendJSON(res, { success: false, message: 'File too large', messageZh: '图片不能超过5MB' }, 400);
       }
 
-      // 生成唯一文件名避免冲突
       const safeName = Date.now().toString(36) + '_' + filename.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const filePath = path.join(UPLOAD_DIR, safeName);
-      fs.writeFileSync(filePath, buffer);
+      const contentType = ext === '.png' ? 'image/png' : ext === '.gif' ? 'image/gif' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
 
-      const urlPath = '/uploads/' + safeName;
-      addLog('上传图片', `${filename} → ${urlPath}`, getAdminFromToken(req));
-      return sendJSON(res, { success: true, path: urlPath, message: 'Upload successful', messageZh: '上传成功' });
+      const imageUrl = await db.uploadImage(safeName, buffer, contentType);
+
+      addLog('上传图片', filename + ' → ' + imageUrl, getAdminFromToken(req));
+      return sendJSON(res, { success: true, path: imageUrl, message: 'Upload successful', messageZh: '上传成功' });
     }
 
-    // ====== GET /api/admin/restaurants (获取可编辑的餐厅数据) ======
+    // ====== GET /api/admin/restaurants ======
     if (req.method === 'GET' && pathname === '/api/admin/restaurants') {
       if (!requireAuth(req, res)) return;
       return sendJSON(res, { success: true, data: restaurants, defaults: DEFAULT_RESTAURANTS });
     }
 
-    // ====== PUT /api/admin/restaurant (保存餐厅数据) ======
+    // ====== PUT /api/admin/restaurant ======
     if (req.method === 'PUT' && pathname === '/api/admin/restaurant') {
       if (!requireAuth(req, res)) return;
       const body = await parseBody(req);
@@ -489,8 +794,8 @@ async function handleAPI(req, res, pathname, query) {
       }
       const oldName = restaurants[idx].name;
       restaurants[idx] = rdata;
-      await writeJSON(RESTAURANTS_FILE, restaurants);
-      addLog('更新餐厅', `${oldName} (ID:${id})`, getAdminFromToken(req));
+      await db.saveRestaurant(id, rdata);
+      addLog('更新餐厅', oldName + ' (ID:' + id + ')', getAdminFromToken(req));
       return sendJSON(res, { success: true, message: 'Saved', messageZh: '保存成功' });
     }
 
@@ -505,31 +810,27 @@ async function handleAPI(req, res, pathname, query) {
     if (req.method === 'POST' && pathname === '/api/admin/clear-logs') {
       if (!requireAuth(req, res)) return;
       logs = [];
-      await writeJSON(LOGS_FILE, logs);
+      await db.clearLogs();
       addLog('清除日志', '操作日志已清空', getAdminFromToken(req));
       return sendJSON(res, { success: true, message: 'Logs cleared', messageZh: '操作日志已清空' });
     }
 
     // ====== GET /api/health ======
     if (req.method === 'GET' && pathname === '/api/health') {
-      return sendJSON(res, { success: true, time: new Date().toISOString(), version: '3.0' });
+      return sendJSON(res, {
+        success: true,
+        time: new Date().toISOString(),
+        version: '4.0',
+        storage: USE_SUPABASE ? 'supabase' : 'json-file'
+      });
     }
 
-    // 未知API
     return sendJSON(res, { success: false, message: 'Unknown API', messageZh: '未知接口' }, 404);
 
   } catch (e) {
     console.error('API error:', e);
     return sendJSON(res, { success: false, message: 'Server error: ' + e.message, messageZh: '服务器错误' }, 500);
   }
-}
-
-// ====== 从Token获取管理员名 ======
-function getAdminFromToken(req) {
-  const auth = req.headers['authorization'] || '';
-  const token = auth.replace('Bearer ', '');
-  const info = adminTokens.get(token);
-  return info ? info.username : 'unknown';
 }
 
 // ====== 静态文件服务 ======
@@ -539,7 +840,6 @@ function serveStatic(req, res) {
 
   const fullPath = path.join(__dirname, filePath);
 
-  // 安全检查：防止目录遍历
   if (!fullPath.startsWith(__dirname)) {
     res.writeHead(403);
     res.end('Forbidden');
@@ -573,39 +873,34 @@ function handleWechatCallback(req, res) {
   if (!code) {
     if (!WECHAT_APPID) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(`<html><body style="font-family:sans-serif;padding:40px;text-align:center;">
-        <h2>WeChat Auth Not Configured / 微信授权未配置</h2>
-        <p>Please set WECHAT_APPID and WECHAT_SECRET environment variables.</p>
-      </body></html>`);
+      res.end('<html><body style="font-family:sans-serif;padding:40px;text-align:center;"><h2>WeChat Auth Not Configured / 微信授权未配置</h2><p>Please set WECHAT_APPID and WECHAT_SECRET environment variables.</p></body></html>');
       return;
     }
-    const redirectUri = encodeURIComponent(`https://${req.headers.host}/auth/wechat/callback`);
-    const authUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${WECHAT_APPID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_base&state=${state || 'index'}#wechat_redirect`;
+    const redirectUri = encodeURIComponent('https://' + req.headers.host + '/auth/wechat/callback');
+    const authUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + WECHAT_APPID + '&redirect_uri=' + redirectUri + '&response_type=code&scope=snsapi_base&state=' + (state || 'index') + '#wechat_redirect';
     res.writeHead(302, { 'Location': authUrl });
     res.end();
     return;
   }
 
-  const tokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${WECHAT_APPID}&secret=${WECHAT_SECRET}&code=${code}&grant_type=authorization_code`;
+  const tokenUrl = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=' + WECHAT_APPID + '&secret=' + WECHAT_SECRET + '&code=' + code + '&grant_type=authorization_code';
 
   https.get(tokenUrl, (wxRes) => {
     let body = '';
-    wxRes.on('data', chunk => body += chunk);
+    wxRes.on('data', chunk => { body += chunk; });
     wxRes.on('end', () => {
       try {
         const data = JSON.parse(body);
         if (data.openid) {
           const target = state && state !== 'index'
-            ? `/${state}.html?openid=${data.openid}`
-            : `/?openid=${data.openid}`;
+            ? '/' + state + '.html?openid=' + data.openid
+            : '/?openid=' + data.openid;
           res.writeHead(302, { 'Location': target });
           res.end();
         } else {
           console.error('WeChat OAuth error:', body);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(`<html><body style="font-family:sans-serif;padding:40px;text-align:center;">
-            <h2>Auth Failed / 授权失败</h2><p>${data.errmsg || 'Unknown error'}</p>
-            <p><a href="/">Return / 返回首页</a></p></body></html>`);
+          res.end('<html><body style="font-family:sans-serif;padding:40px;text-align:center;"><h2>Auth Failed / 授权失败</h2><p>' + (data.errmsg || 'Unknown error') + '</p><p><a href="/">Return / 返回首页</a></p></body></html>');
         }
       } catch (e) {
         console.error('Parse WeChat response failed:', e);
@@ -618,32 +913,46 @@ function handleWechatCallback(req, res) {
   });
 }
 
-// ====== 路由 ======
-const server = http.createServer(async (req, res) => {
-  const parsed = url.parse(req.url, true);
-  const pathname = parsed.pathname;
-  const query = parsed.query;
+// ====== 启动 ======
+async function startServer() {
+  // 从 Supabase 或 JSON 文件加载数据
+  console.log('正在加载数据...');
+  stats = await db.loadStats();
+  claimedRedpackets = await db.loadRedpackets();
+  restaurants = await db.loadRestaurants();
+  logs = await db.loadLogs();
 
-  // API 路由
-  if (pathname.startsWith('/api/')) {
-    return handleAPI(req, res, pathname, query);
-  }
+  const server = http.createServer(async (req, res) => {
+    const parsed = url.parse(req.url, true);
+    const pathname = parsed.pathname;
+    const query = parsed.query;
 
-  // 微信 OAuth
-  if (pathname === '/auth/wechat/callback' || pathname === '/auth/wechat') {
-    return handleWechatCallback(req, res);
-  }
+    if (pathname.startsWith('/api/')) {
+      return handleAPI(req, res, pathname, query);
+    }
 
-  // 静态文件
-  serveStatic(req, res);
-});
+    if (pathname === '/auth/wechat/callback' || pathname === '/auth/wechat') {
+      return handleWechatCallback(req, res);
+    }
 
-server.listen(PORT, () => {
-  console.log('🧧 三店联动 v3.0 已启动: http://localhost:' + PORT);
-  console.log('📂 数据目录: ' + DATA_DIR);
-  console.log('📊 扫码' + stats.scanCount + ' | 领取' + stats.redpacketClaimed + ' | 核销' + stats.redpacketUsed);
-  console.log('🔐 管理后台: http://localhost:' + PORT + '/admin.html');
-  if (!WECHAT_APPID) console.log('💡 微信OAuth未配置，红包使用手机号验证');
-  if (!savedRestaurants) console.log('📝 餐厅数据：使用默认配置（首次运行）');
-  else console.log('📝 餐厅数据：已加载自定义配置');
+    serveStatic(req, res);
+  });
+
+  server.listen(PORT, () => {
+    console.log('🧧 三店联动 v4.0 已启动: http://localhost:' + PORT);
+    console.log('📊 扫码' + stats.scanCount + ' | 领取' + stats.redpacketClaimed + ' | 核销' + stats.redpacketUsed);
+    console.log('🔐 管理后台: http://localhost:' + PORT + '/admin.html');
+    if (USE_SUPABASE) {
+      console.log('✅ 数据存储: Supabase PostgreSQL (' + SUPABASE_URL + ')');
+    } else {
+      console.log('⚠️ 数据存储: JSON 文件 (未配置 SUPABASE_URL / SUPABASE_SERVICE_KEY)');
+      console.log('⚠️ 生产环境请配置 Supabase 环境变量，否则数据将在重启后丢失');
+    }
+    if (!WECHAT_APPID) console.log('💡 微信OAuth未配置，红包使用手机号验证');
+  });
+}
+
+startServer().catch(e => {
+  console.error('服务器启动失败:', e);
+  process.exit(1);
 });

@@ -1,6 +1,6 @@
 {
   "name": "three-restaurant-redpacket",
-  "version": "1.0.0",
+  "version": "4.0.0",
   "description": "三店联动扫码领红包营销系统",
   "main": "server.js",
   "scripts": {
