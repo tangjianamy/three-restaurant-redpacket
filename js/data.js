@@ -344,4 +344,8 @@ async function clearAllData(token) {
   await loadRestaurantsFromServer();
   await loadStats();
   try { await getAllRedpackets(); } catch (e) {}
+  // 数据库数据加载完成后，通知前端刷新
+  if (typeof window._onDataReady === 'function') {
+    try { window._onDataReady(); } catch(e) {}
+  }
 })();
