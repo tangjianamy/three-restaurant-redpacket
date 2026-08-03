@@ -43,6 +43,11 @@ function updateHeroLang(lang) {
   if (heroSub) heroSub.textContent = lang === 'en' ? 'Claim a red packet at each restaurant!' : '每家店都有专属红包，逛哪家领哪家';
 }
 
+// 数据库数据加载完成后的回调 — 重新渲染卡片
+window._onDataReady = function() {
+  try { renderCardList(); } catch(e) {}
+};
+
 // 页面加载
 document.addEventListener('DOMContentLoaded', async function() {
   try {
